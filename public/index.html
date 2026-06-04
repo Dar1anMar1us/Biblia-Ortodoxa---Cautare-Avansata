@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Primary Meta Tags -->
+  <title>Biblia Ortodoxă — Căutare avansată, citire online</title>
+  <meta name="title" content="Biblia Ortodoxă — Căutare avansată, citire online">
+  <meta name="description" content="Citește și caută în Biblia Ortodoxă online. Peste 36.000 de versete în limba română din Vechiul Testament, Noul Testament și Cărțile Deuterocanonice. Căutare full-text rapidă.">
+  <meta name="keywords" content="Biblia Ortodoxă, Biblie, Vechiul Testament, Noul Testament, Deuterocanonice, scriptură, citire biblie online, carte sfântă, ortodox, credință">
+  <meta name="robots" content="index, follow">
+  <meta name="language" content="Romanian">
+  <meta name="author" content="Darian Marius Chircă">
+
+  <!-- Theme Color -->
+  <meta name="theme-color" content="#1a1a2e">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://bibliaortodoxa.ro/">
+  <meta property="og:title" content="Biblia Ortodoxă — Căutare avansată, citire online">
+  <meta property="og:description" content="Citește și caută în Biblia Ortodoxă online. Peste 36.000 de versete din VT, NT și Deuterocanonice. Căutare full-text rapidă.">
+  <meta property="og:image" content="https://bibliaortodoxa.ro/og-image.png">
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://bibliaortodoxa.ro/">
+  <meta property="twitter:title" content="Biblia Ortodoxă — Căutare avansată, citire online">
+  <meta property="twitter:description" content="Citește și caută în Biblia Ortodoxă online. Peste 36.000 de versete din VT, NT și Deuterocanonice.">
+  <meta property="twitter:image" content="https://bibliaortodoxa.ro/og-image.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="canonical" href="https://bibliaortodoxa.ro/">
+
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Biblia Ortodoxă",
+    "url": "https://bibliaortodoxa.ro/",
+    "description": "Citește și caută în Biblia Ortodoxă online. Peste 36.000 de versete din Vechiul Testament, Noul Testament și Cărțile Deuterocanonice.",
+    "inLanguage": "ro",
+    "author": {
+      "@type": "Person",
+      "name": "Darian Marius Chircă"
+    },
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": "https://bibliaortodoxa.ro/search?q={search_term_string}"
+      },
+      "query-input": "required name=search_term_string"
+    }
+  }
+  </script>
+  <style>
+    :root {
+      --gold: #c9a84c;
+      --gold-light: #e8d48b;
+      --dark: #1a1a2e;
+      --darker: #12121f;
+      --card-bg: #1e1e36;
+      --text: #e8e0d0;
+      --text-dim: #9990a0;
+      --accent: #d4a843;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Georgia', 'Times New Roman', serif;
+      background: var(--darker);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .container { max-width: 960px; margin: 0 auto; padding: 0 20px; }
+
+    /* Header */
+    header {
+      background: var(--dark);
+      border-bottom: 2px solid var(--gold);
+      padding: 20px 0;
+      margin-bottom: 30px;
+    }
+    header .container {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 15px;
+    }
+    .logo {
+      font-size: 1.6em; font-weight: bold; color: var(--gold);
+      text-decoration: none; letter-spacing: 1px;
+    }
+    .logo small { font-size: 0.5em; color: var(--text-dim); display: block; }
+
+    /* Search */
+    .search-box { flex: 1; min-width: 250px; position: relative; }
+    .search-box form { display: flex; gap: 8px; }
+    .search-box input {
+      flex: 1; padding: 10px 14px; border: 1px solid #333; border-radius: 6px;
+      background: var(--darker); color: var(--text); font-size: 1em;
+      font-family: inherit;
+    }
+    .search-box input:focus { outline: none; border-color: var(--gold); }
+    .search-box button {
+      padding: 10px 20px; background: var(--gold); color: #000;
+      border: none; border-radius: 6px; cursor: pointer; font-weight: bold;
+      font-family: inherit;
+    }
+    .search-box button:hover { background: var(--gold-light); }
+
+    /* Search suggestions */
+    .suggestions {
+      position: absolute; top: 100%; left: 0; right: 0; z-index: 100;
+      background: var(--card-bg); border: 1px solid #333; border-radius: 0 0 6px 6px;
+      display: none; max-height: 250px; overflow-y: auto;
+    }
+    .suggestions div {
+      padding: 8px 14px; cursor: pointer; border-bottom: 1px solid #2a2a3e;
+      font-size: 0.9em;
+    }
+    .suggestions div:hover { background: #2a2a4e; }
+    .suggestions .ref { color: var(--gold); font-size: 0.8em; }
+    .suggestions .preview { color: var(--text-dim); }
+
+    /* Stats bar */
+    .stats {
+      text-align: center; margin-bottom: 25px; color: var(--text-dim);
+      font-size: 0.9em;
+    }
+    .stats strong { color: var(--gold); }
+
+    /* Book list (homepage) */
+    .testament-section { margin-bottom: 30px; }
+    .testament-title {
+      font-size: 1.3em; color: var(--gold); border-bottom: 1px solid #333;
+      padding-bottom: 8px; margin-bottom: 12px; text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+    .book-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 8px;
+    }
+    .book-card {
+      background: var(--card-bg); padding: 10px 14px; border-radius: 6px;
+      cursor: pointer; transition: 0.2s; text-decoration: none; color: var(--text);
+      border: 1px solid transparent;
+    }
+    .book-card:hover {
+      border-color: var(--gold); background: #252545;
+    }
+    .book-card .name { font-size: 0.95em; }
+    .book-card .meta { font-size: 0.75em; color: var(--text-dim); margin-top: 3px; }
+
+    /* Chapter view */
+    .chapter-header {
+      margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #333;
+    }
+    .chapter-header h1 { font-size: 1.5em; color: var(--gold); }
+    .chapter-header .subtitle { color: var(--text-dim); font-size: 0.9em; margin-top: 4px; }
+    .chapter-nav {
+      display: flex; flex-wrap: wrap; gap: 6px; margin: 15px 0;
+    }
+    .chapter-nav a {
+      display: inline-block; padding: 4px 10px; border-radius: 4px;
+      background: var(--card-bg); color: var(--text); text-decoration: none;
+      font-size: 0.85em; border: 1px solid #333;
+    }
+    .chapter-nav a.active { background: var(--gold); color: #000; border-color: var(--gold); }
+    .chapter-nav a:hover:not(.active) { border-color: var(--gold); }
+    .chapter-nav a.disabled { opacity: 0.3; pointer-events: none; cursor: default; }
+    .chapter-nav select {
+      background: var(--card-bg); color: var(--text); border: 1px solid #333;
+      border-radius: 4px; padding: 4px 10px; font-size: 0.9em; font-family: inherit;
+      cursor: pointer; min-width: 140px;
+    }
+    .chapter-nav select:hover { border-color: var(--gold); }
+    .chapter-nav select:focus { outline: none; border-color: var(--gold); }
+
+    /* Verses */
+    .verse {
+      padding: 10px 14px; border-radius: 4px; margin-bottom: 4px;
+      transition: 0.2s;
+    }
+    .verse:hover { background: rgba(201, 168, 76, 0.05); }
+    .verse .num {
+      color: var(--gold); font-weight: bold; margin-right: 8px;
+      display: inline-block; min-width: 24px;
+    }
+    .verse .text { line-height: 1.7; }
+
+    /* Search results */
+    .result {
+      background: var(--card-bg); padding: 14px 18px; border-radius: 6px;
+      margin-bottom: 10px; border: 1px solid #2a2a3e;
+    }
+    .result:hover { border-color: var(--gold); }
+    .result .ref {
+      color: var(--gold); font-weight: bold; font-size: 0.9em;
+      cursor: pointer; text-decoration: none;
+    }
+    .result .ref:hover { text-decoration: underline; }
+    .result .text { margin-top: 6px; line-height: 1.6; }
+    .result .text mark { background: rgba(201, 168, 76, 0.3); color: var(--gold-light); padding: 1px 3px; border-radius: 2px; }
+    .result .meta { margin-top: 6px; font-size: 0.8em; color: var(--text-dim); }
+    .results-count { margin-bottom: 15px; color: var(--text-dim); }
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--text-dim); }
+    .empty-state .icon { font-size: 3em; margin-bottom: 15px; }
+
+    /* Facets */
+    .facets {
+      display: flex; flex-wrap: wrap; gap: 8px; margin: 15px 0 25px;
+    }
+    .facet {
+      background: var(--card-bg); padding: 5px 12px; border-radius: 20px;
+      font-size: 0.85em; cursor: pointer; border: 1px solid #333;
+      color: var(--text); text-decoration: none;
+    }
+    .facet:hover { border-color: var(--gold); }
+    .facet .count { color: var(--gold); margin-left: 4px; }
+
+    /* Pagination */
+    .pagination {
+      display: flex; justify-content: center; gap: 8px; margin: 25px 0;
+    }
+    .pagination a {
+      padding: 6px 14px; border-radius: 4px; background: var(--card-bg);
+      color: var(--text); text-decoration: none; border: 1px solid #333;
+    }
+    .pagination a:hover { border-color: var(--gold); }
+    .pagination a.active { background: var(--gold); color: #000; border-color: var(--gold); }
+    .pagination a.disabled { opacity: 0.3; pointer-events: none; }
+
+    /* Footer */
+    footer {
+      text-align: center; padding: 30px 0; color: var(--text-dim);
+      font-size: 0.85em; border-top: 1px solid #222; margin-top: 40px;
+    }
+    footer a { color: var(--gold); text-decoration: none; }
+
+    /* Loading */
+    .loading { text-align: center; padding: 40px; color: var(--text-dim); }
+    .loading::after { content: '⏳'; animation: pulse 1s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    /* Verse highlighting in URL fragments */
+    :target { background: rgba(201, 168, 76, 0.15); border-left: 3px solid var(--gold); }
+    .verse:target { background: rgba(201, 168, 76, 0.15); border-left: 3px solid var(--gold); }
+
+    /* Pulse animation for search-navigated verses */
+    @keyframes pulse-highlight {
+      0% { background: rgba(201, 168, 76, 0.5); border-left: 3px solid var(--gold); box-shadow: 0 0 12px rgba(201, 168, 76, 0.4); }
+      25% { background: rgba(201, 168, 76, 0.7); border-left: 3px solid var(--gold-light); box-shadow: 0 0 20px rgba(201, 168, 76, 0.6); }
+      50% { background: rgba(201, 168, 76, 0.8); border-left: 3px solid #ffd700; box-shadow: 0 0 28px rgba(201, 168, 76, 0.7); }
+      75% { background: rgba(201, 168, 76, 0.4); border-left: 3px solid var(--gold); box-shadow: 0 0 12px rgba(201, 168, 76, 0.3); }
+      100% { background: rgba(201, 168, 76, 0.15); border-left: 3px solid var(--gold); box-shadow: none; }
+    }
+    .verse.pulse {
+      animation: pulse-highlight 1.5s ease-out forwards;
+      animation-iteration-count: 2;
+    }
+
+    .hidden { display: none; }
+
+    @media (max-width: 600px) {
+      .book-grid { grid-template-columns: repeat(2, 1fr); }
+      header .container { flex-direction: column; }
+      .search-box { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <a href="/" class="logo">
+        📖 BibliaOrtodoxă
+        <small>Căutare avansată</small>
+      </a>
+      <div class="search-box">
+        <form id="searchForm" action="/search">
+          <input type="text" id="searchInput" name="q" placeholder="Caută în Biblie... cuvinte, fraze, orice" autocomplete="off">
+          <button type="submit">Caută</button>
+        </form>
+        <div class="suggestions" id="suggestions"></div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" id="app">
+    <div class="loading" id="loading">Se încarcă...</div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>Biblia Ortodoxă — Căutare full-text cu suport pentru cuvinte, fraze, AND/OR/NOT</p>
+      <p style="margin-top: 5px">
+        <a href="/">Toate cărțile</a> ·
+        <a href="/api/books">API</a> ·
+        Sursă: <a href="https://www.bibliaortodoxa.ro" target="_blank">bibliaortodoxa.ro</a>
+      </p>
+      <p style="margin-top: 8px; font-size: 0.85em; color: var(--text-dim)">
+        Făcută cu ❤️ de <strong>Darian Marius Chircă</strong>
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    // ─── Router ──────────────────────────────────────────────
+    function getRoute() {
+      const path = window.location.pathname;
+      const params = new URLSearchParams(window.location.search);
+
+      if (path === '/' || path === '') return { page: 'home' };
+
+      const matchBook = path.match(/^\/carte\/([^\/]+)(?:\/capitol\/(\d+))?$/);
+      if (matchBook) {
+        return {
+          page: 'chapter',
+          bookName: decodeURIComponent(matchBook[1]),
+          chapter: matchBook[2] ? parseInt(matchBook[2]) : 1
+        };
+      }
+
+      if (path === '/search') {
+        return { page: 'search', q: params.get('q'), carte: params.get('carte'), limit: params.get('limit'), offset: parseInt(params.get('offset') || '0') };
+      }
+
+      return { page: 'home' };
+    }
+
+    // ─── API helper ──────────────────────────────────────────
+    async function api(url) {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(await res.text());
+      return res.json();
+    }
+
+    // ─── Router / Navigation ─────────────────────────────────
+    function navigate(url) {
+      window.history.pushState({}, '', url);
+      window.scrollTo(0, 0);
+      render();
+    }
+
+    window.addEventListener('popstate', () => {
+      window.scrollTo(0, 0);
+      render();
+    });
+
+    // ─── SPA link interceptor ────────────────────────────────
+    document.addEventListener('click', function(e) {
+      const link = e.target.closest('[data-spa], .chapter-nav a, .pagination a, .facet');
+      if (!link) return;
+      if (link.classList.contains('disabled') || link.classList.contains('active')) {
+        e.preventDefault();
+        return;
+      }
+      const href = link.getAttribute('href');
+      if (!href || href.startsWith('http')) return;
+      e.preventDefault();
+      navigate(href);
+    });
+
+    // ─── Render Functions ────────────────────────────────────
+
+    async function renderHome() {
+      const app = document.getElementById('app');
+      app.innerHTML = '<div class="loading">Se încarcă...</div>';
+
+      try {
+        const data = await api('/api/books');
+
+        const ot = data.books.filter(b => b.testament === 'OT');
+        const nt = data.books.filter(b => b.testament === 'NT');
+        const deutero = data.books.filter(b => b.testament === 'DEUTERO');
+
+        const totalVerses = data.books.reduce((s, b) => s + b.versete_total, 0);
+
+        let html = `
+          <div class="stats">
+            <strong>${data.books.length}</strong> cărți ·
+            <strong>${totalVerses}</strong> versete ·
+            Caută cuvinte, fraze, expresii
+          </div>
+          <div class="testament-section">
+            <div class="testament-title">✡ Vechiul Testament</div>
+            <div class="book-grid">
+              ${renderBookGrid(ot)}
+            </div>
+          </div>
+          <div class="testament-section">
+            <div class="testament-title">✝ Noul Testament</div>
+            <div class="book-grid">
+              ${renderBookGrid(nt)}
+            </div>
+          </div>
+          <div class="testament-section">
+            <div class="testament-title">📜 Cărțile Deuterocanonice</div>
+            <div class="book-grid">
+              ${renderBookGrid(deutero)}
+            </div>
+          </div>
+        `;
+        app.innerHTML = html;
+      } catch (err) {
+        app.innerHTML = `<div class="empty-state"><div class="icon">❌</div><p>Eroare: ${err.message}</p></div>`;
+      }
+    }
+
+    function renderBookGrid(books) {
+      return books.map(b => `
+        <a href="/carte/${encodeURIComponent(b.nume)}" class="book-card" data-spa>
+          <div class="name">${b.nume}</div>
+          <div class="meta">${b.capitole_total || '?'} capitole · ${b.versete_total} versete</div>
+        </a>
+      `).join('');
+    }
+
+    async function renderChapter(bookName, chapter) {
+      const app = document.getElementById('app');
+      app.innerHTML = '<div class="loading">Se încarcă...</div>';
+
+      try {
+        const data = await api(`/api/books/${encodeURIComponent(bookName)}/chapters/${chapter}`);
+
+        let html = `
+          <div class="chapter-header">
+            <h1>${data.book.nume} — Capitolul ${data.capitol}</h1>
+            <div class="subtitle">${data.total_versete} versete · ${data.book.testament === 'OT' ? 'Vechiul Testament' : data.book.testament === 'NT' ? 'Noul Testament' : 'Deuterocanonice'}</div>
+            <div class="chapter-nav">
+              <a href="/" class="${!data.navigare.precedent && !data.navigare.urmator ? 'active' : ''}" title="Înapoi la cărți">📖</a>
+              ${data.navigare.precedent ? `<a href="/carte/${encodeURIComponent(data.book.nume)}/capitol/${data.navigare.precedent}" title="Capitolul ${data.navigare.precedent}">◀</a>` : '<a class="disabled">◀</a>'}
+              <select id="chapterSelect" onchange="navigate('/carte/${encodeURIComponent(data.book.nume)}/capitol/' + this.value)">
+                ${Array.from({length: data.total_capitole}, (_, i) => i + 1).map(c =>
+                  `<option value="${c}" ${c === data.capitol ? 'selected' : ''}>Capitolul ${c}</option>`
+                ).join('')}
+              </select>
+              ${data.navigare.urmator ? `<a href="/carte/${encodeURIComponent(data.book.nume)}/capitol/${data.navigare.urmator}" title="Capitolul ${data.navigare.urmator}">▶</a>` : '<a class="disabled">▶</a>'}
+            </div>
+          </div>
+          <div class="verses">
+            ${data.versete.map(v => `
+              <div class="verse" id="${v.numar}">
+                <span class="num">${v.numar}.</span>
+                <span class="text">${escapeHtml(v.text)}</span>
+              </div>
+            `).join('')}
+          </div>
+        `;
+
+        app.innerHTML = html;
+
+        // Scroll to verse if hash present (after render)
+        requestAnimationFrame(() => {
+          const hash = window.location.hash;
+          if (hash) {
+            const id = hash.substring(1);
+            const el = document.getElementById(id);
+            if (el) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              // Pulse highlight: adaugă clasa, apoi o elimină după animație
+              el.classList.add('pulse');
+              el.addEventListener('animationend', function onEnd() {
+                el.classList.remove('pulse');
+                el.removeEventListener('animationend', onEnd);
+              });
+            }
+          }
+        });
+      } catch (err) {
+        app.innerHTML = `<div class="empty-state"><div class="icon">❌</div><p>Eroare: ${err.message}</p></div>`;
+      }
+    }
+
+    async function renderSearch(q, carte, limit, offset) {
+      const app = document.getElementById('app');
+      app.innerHTML = '<div class="loading">Se caută...</div>';
+
+      try {
+        const params = new URLSearchParams({ q, limit: limit || 20, offset: offset || 0 });
+        if (carte) params.set('carte', carte);
+        const data = await api(`/api/search?${params}`);
+
+        if (data.total === 0) {
+          app.innerHTML = `
+            <div class="empty-state">
+              <div class="icon">🔍</div>
+              <p>Niciun rezultat pentru <strong>${escapeHtml(q)}</strong></p>
+              <p style="margin-top:8px;color:var(--text-dim)">Încearcă alt cuvânt, o frază, sau "cuvânt1 AND cuvânt2"</p>
+              <div style="margin-top:15px">
+                <a href="/" class="facet">📖 Navighează cărți</a>
+              </div>
+            </div>
+          `;
+          // Update search input
+          document.getElementById('searchInput').value = q;
+          return;
+        }
+
+        let html = `
+          <div class="results-count">
+            <strong>${data.total}</strong> rezultate pentru <strong>"${escapeHtml(q)}"</strong>
+            ${carte ? `<span style="color:var(--text-dim)"> (filtrat)</span>` : ''}
+            ${carte ? `<a href="/search?q=${encodeURIComponent(q)}" class="facet" style="display:inline-block;margin-left:8px">✕ elimină filtrul</a>` : ''}
+          </div>
+        `;
+
+        // Facets (filter by book)
+        if (data.filtre && data.filtre.length > 1 && !carte) {
+          html += `<div class="facets">${data.filtre.slice(0, 15).map(f => `
+            <a href="/search?q=${encodeURIComponent(q)}&carte=${f.id}" class="facet">
+              ${f.nume} <span class="count">${f.count}</span>
+            </a>
+          `).join('')}</div>`;
+        }
+
+        // Results
+        html += data.results.map(r => `
+          <div class="result">
+            <a href="/carte/${encodeURIComponent(r.carte)}/capitol/${r.capitol}#${r.verset}" class="ref" data-spa>
+              ${r.referinta}
+            </a>
+            <div class="text">${highlightText(r.text, q)}</div>
+            <div class="meta">${r.testament === 'OT' ? 'VT' : r.testament === 'NT' ? 'NT' : 'DC'} · ${r.text.length} caractere</div>
+          </div>
+        `).join('');
+
+        // Pagination
+        const totalPages = Math.ceil(data.total / (limit || 20));
+        const currentPage = Math.floor((offset || 0) / (limit || 20)) + 1;
+        if (totalPages > 1) {
+          html += '<div class="pagination">';
+          // Previous
+          const prevOffset = Math.max(0, (offset || 0) - (limit || 20));
+          html += (offset > 0)
+            ? `<a href="/search?q=${encodeURIComponent(q)}${carte ? `&carte=${carte}` : ''}&offset=${prevOffset}">◀ Anterioară</a>`
+            : `<a class="disabled">◀ Anterioară</a>`;
+
+          // Page numbers
+          const startPage = Math.max(1, currentPage - 2);
+          const endPage = Math.min(totalPages, currentPage + 2);
+          for (let p = startPage; p <= endPage; p++) {
+            const pageOffset = (p - 1) * (limit || 20);
+            html += p === currentPage
+              ? `<a class="active">${p}</a>`
+              : `<a href="/search?q=${encodeURIComponent(q)}${carte ? `&carte=${carte}` : ''}&offset=${pageOffset}">${p}</a>`;
+          }
+
+          // Next
+          const nextOffset = (offset || 0) + (limit || 20);
+          html += (nextOffset < data.total)
+            ? `<a href="/search?q=${encodeURIComponent(q)}${carte ? `&carte=${carte}` : ''}&offset=${nextOffset}">Următoare ▶</a>`
+            : `<a class="disabled">Următoare ▶</a>`;
+
+          html += '</div>';
+        }
+
+        app.innerHTML = html;
+        document.getElementById('searchInput').value = q;
+      } catch (err) {
+        app.innerHTML = `<div class="empty-state"><div class="icon">❌</div><p>Eroare: ${err.message}</p></div>`;
+      }
+    }
+
+    // ─── Utilities ───────────────────────────────────────────
+    function escapeHtml(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function highlightText(text, query) {
+      if (!query || !text) return escapeHtml(text);
+      const words = query.split(/\s+/).filter(w => w.length > 2);
+      if (words.length === 0) return escapeHtml(text);
+      let result = escapeHtml(text);
+      for (const word of words) {
+        const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp('(' + escaped + ')', 'gi');
+        result = result.replace(regex, '<mark>$1</mark>');
+      }
+      return result;
+    }
+
+    // ─── Main Render ─────────────────────────────────────────
+    async function render() {
+      const route = getRoute();
+      switch (route.page) {
+        case 'home':
+          await renderHome();
+          break;
+        case 'chapter':
+          await renderChapter(route.bookName, route.chapter);
+          break;
+        case 'search':
+          await renderSearch(route.q, route.carte, route.limit, route.offset);
+          break;
+        default:
+          await renderHome();
+      }
+    }
+
+    // ─── Search Form ─────────────────────────────────────────
+    document.getElementById('searchForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const q = document.getElementById('searchInput').value.trim();
+      if (!q) return;
+
+      // Ascunde sugestiile
+      document.getElementById('suggestions').style.display = 'none';
+
+      // Încearcă mai întâi ca referință (ex: "Ioan 1:1", "Geneza 2:15")
+      let ref = null;
+      try {
+        const res = await fetch(`/api/reference?q=${encodeURIComponent(q)}`);
+        if (res.ok) ref = await res.json();
+      } catch(_) {}
+
+      if (ref && ref.found) {
+        navigate(ref.url);
+        return;
+      }
+
+      // Altfel, text search normal
+      navigate(`/search?q=${encodeURIComponent(q)}`);
+    });
+
+    // ─── Autocomplete / Suggestions ──────────────────────────
+    let suggestTimeout;
+
+    // Ascunde sugestiile la Enter ca să nu între în conflict cu formularul
+    document.getElementById('searchInput').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        document.getElementById('suggestions').style.display = 'none';
+      }
+    });
+
+    document.getElementById('searchInput').addEventListener('input', function() {
+      clearTimeout(suggestTimeout);
+      const q = this.value.trim();
+      const suggestions = document.getElementById('suggestions');
+      if (q.length < 2) { suggestions.style.display = 'none'; return; }
+
+      suggestTimeout = setTimeout(async () => {
+        try {
+          const data = await api(`/api/search/suggest?q=${encodeURIComponent(q)}`);
+          if (data.suggestions && data.suggestions.length > 0) {
+            suggestions.innerHTML = data.suggestions.map(s =>
+              `<div onclick="document.getElementById('suggestions').style.display='none';document.getElementById('searchInput').value='${escapeHtml(s.referinta)}';navigate('/carte/${encodeURIComponent(s.carte_nume)}/capitol/${s.capitol}#${s.verset}')">
+                <span class="ref">${escapeHtml(s.referinta)}</span>
+                <span class="preview"> — ${escapeHtml(s.preview)}</span>
+              </div>`
+            ).join('');
+            suggestions.style.display = 'block';
+          } else {
+            suggestions.style.display = 'none';
+          }
+        } catch(e) { suggestions.style.display = 'none'; }
+      }, 300);
+    });
+
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.search-box')) {
+        document.getElementById('suggestions').style.display = 'none';
+      }
+    });
+
+    // ─── Initial Render ──────────────────────────────────────
+    render();
+  </script>
+</body>
+</html>
