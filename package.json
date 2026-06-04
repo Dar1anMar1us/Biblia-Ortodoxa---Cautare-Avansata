@@ -1,0 +1,28 @@
+{
+  "name": "bible-api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "cypress run --headless --browser chromium",
+    "test:open": "cypress open",
+    "test:spec": "cypress run --headless --browser chromium --spec 'cypress/e2e/bible.cy.js'",
+    "test:all": "npx cypress run --headless --browser chromium",
+    "start": "node server.js",
+    "ci:test": "node server.js & sleep 2 && npx cypress run --headless --browser chromium; kill %1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.16.1",
+    "better-sqlite3": "^12.10.0",
+    "cheerio": "^1.2.0",
+    "cors": "^2.8.6",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "@cypress/webpack-preprocessor": "^7.1.1",
+    "cypress": "^15.16.0"
+  }
+}
