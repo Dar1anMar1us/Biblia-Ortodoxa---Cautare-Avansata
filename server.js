@@ -398,7 +398,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.get('/robots.txt', (req, res) => {
   res.type('text/plain').send(`User-agent: *
 Allow: /
-Sitemap: https://bibliaortodoxa.ro/sitemap.xml
+Sitemap: https://bibliaortodoxa.org/sitemap.xml
 `);
 });
 
@@ -416,14 +416,14 @@ app.get('/sitemap.xml', (req, res) => {
   let urls = '';
 
   // Homepage
-  urls += `  <url>\n    <loc>https://bibliaortodoxa.ro/</loc>\n    <changefreq>weekly</changefreq>\n    <priority>1.0</priority>\n  </url>\n`;
+  urls += `  <url>\n    <loc>https://bibliaortodoxa.org/</loc>\n    <changefreq>weekly</changefreq>\n    <priority>1.0</priority>\n  </url>\n`;
 
   // Each book + chapters
   for (const book of books) {
-    urls += `  <url>\n    <loc>https://bibliaortodoxa.ro/carte/${encodeURIComponent(book.nume)}</loc>\n    <changefreq>monthly</changefreq>\n    <priority>0.9</priority>\n  </url>\n`;
+    urls += `  <url>\n    <loc>https://bibliaortodoxa.org/carte/${encodeURIComponent(book.nume)}</loc>\n    <changefreq>monthly</changefreq>\n    <priority>0.9</priority>\n  </url>\n`;
 
     for (let ch = 1; ch <= book.capitole; ch++) {
-      urls += `  <url>\n    <loc>https://bibliaortodoxa.ro/carte/${encodeURIComponent(book.nume)}/capitol/${ch}</loc>\n    <changefreq>monthly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
+      urls += `  <url>\n    <loc>https://bibliaortodoxa.org/carte/${encodeURIComponent(book.nume)}/capitol/${ch}</loc>\n    <changefreq>monthly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
     }
   }
 
