@@ -4,12 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "cypress run --headless --browser chromium",
+    "test": "cypress run --headless",
     "test:open": "cypress open",
-    "test:spec": "cypress run --headless --browser chromium --spec 'cypress/e2e/bible.cy.js'",
-    "test:all": "npx cypress run --headless --browser chromium",
+    "test:spec": "cypress run --headless --spec 'cypress/e2e/bible.cy.js'",
+    "test:all": "npx cypress run --headless",
     "start": "node server.js",
-    "ci:test": "node server.js & sleep 2 && npx cypress run --headless --browser chromium; kill %1"
+    "ci:test": "node server.js & sleep 2 && npx cypress run --headless; kill %1"
   },
   "keywords": [],
   "author": "",

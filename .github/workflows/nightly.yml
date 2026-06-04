@@ -6,7 +6,7 @@ on:
     - cron: '0 22 * * *'
   workflow_dispatch:    # permite trigger manual din UI GitHub
   push:
-    branches: [main, master]
+    branches: [trunk, development]
 
 jobs:
   test:
@@ -25,11 +25,6 @@ jobs:
       - name: 📦 Instalare dependențe
         run: npm ci
 
-      - name: 🖥️ Instalare Chromium + Xvfb
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq xvfb chromium-browser
-
       - name: 🚀 Pornire server
         run: |
           node server.js &
@@ -38,7 +33,7 @@ jobs:
           curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/books
 
       - name: 🧪 Rulează teste E2E
-        run: npx cypress run --headless --browser chromium
+        run: npx cypress run --headless
 
       - name: 📸 Upload screenshot-uri (dacă teste pică)
         if: failure()
