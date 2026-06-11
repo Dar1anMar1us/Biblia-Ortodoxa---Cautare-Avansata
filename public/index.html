@@ -549,7 +549,13 @@
       showContent(html);
 
       // Check if this chapter is saved
-      if (!fromOffline) checkIfSaved(bookNameEncoded, data.capitol);
+      if (fromOffline) {
+        // Dacă am citit din IndexedDB, știm sigur că e salvat
+        const btn = document.getElementById('saveBtn');
+        if (btn) { btn.textContent = '✓ Salvat ✔'; btn.classList.add('saved'); }
+      } else {
+        checkIfSaved(bookNameEncoded, data.capitol);
+      }
 
       // Scroll to verse if hash present (after render)
       requestAnimationFrame(() => {
