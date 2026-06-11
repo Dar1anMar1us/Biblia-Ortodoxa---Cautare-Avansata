@@ -492,65 +492,81 @@
     async function renderChapter(bookName, chapter) {
       showLoader('Se încarcă...');
 
+      let data, fromOffline = false;
+
       try {
-        const data = await api(`/api/books/${encodeURIComponent(bookName)}/chapters/${chapter}`);
-
-        let html = `
-          <div class="chapter-header">
-            <h1>${data.book.nume} — Capitolul ${data.capitol}</h1>
-            <div class="subtitle">${data.total_versete} versete · ${data.book.testament === 'OT' ? 'Vechiul Testament' : data.book.testament === 'NT' ? 'Noul Testament' : 'Deuterocanonice'}</div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
-              <button class="save-btn" id="saveBtn" onclick="toggleSave('${encodeURIComponent(bookName)}', ${chapter}, '${data.book.nume}', ${data.total_capitole})">
-                📥 Salvează offline
-              </button>
-              <span id="saveStatus" class="save-status"></span>
-            </div>
-            <div class="chapter-nav">
-              <a href="/" class="${!data.navigare.precedent && !data.navigare.urmator ? 'active' : ''}" title="Înapoi la cărți">📖</a>
-              ${data.navigare.precedent ? `<a href="/carte/${encodeURIComponent(data.book.nume)}/capitol/${data.navigare.precedent}" title="Capitolul ${data.navigare.precedent}">◀</a>` : '<a class="disabled">◀</a>'}
-              <select id="chapterSelect" onchange="navigate('/carte/${encodeURIComponent(data.book.nume)}/capitol/' + this.value)">
-                ${Array.from({length: data.total_capitole}, (_, i) => i + 1).map(c =>
-                  `<option value="${c}" ${c === data.capitol ? 'selected' : ''}>Capitolul ${c}</option>`
-                ).join('')}
-              </select>
-              ${data.navigare.urmator ? `<a href="/carte/${encodeURIComponent(data.book.nume)}/capitol/${data.navigare.urmator}" title="Capitolul ${data.navigare.urmator}">▶</a>` : '<a class="disabled">▶</a>'}
-            </div>
-          </div>
-          <div class="verses">
-            ${data.versete.map(v => `
-              <div class="verse" id="${v.numar}">
-                <span class="num">${v.numar}.</span>
-                <span class="text">${escapeHtml(v.text)}</span>
-              </div>
-            `).join('')}
-          </div>
-        `;
-
-        showContent(html);
-
-        // Check if this chapter is saved
-        checkIfSaved(encodeURIComponent(bookName), chapter);
-
-        // Scroll to verse if hash present (after render)
-        requestAnimationFrame(() => {
-          const hash = window.location.hash;
-          if (hash) {
-            const id = hash.substring(1);
-            const el = document.getElementById(id);
-            if (el) {
-              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              // Pulse highlight: adaugă clasa, apoi o elimină după animație
-              el.classList.add('pulse');
-              el.addEventListener('animationend', function onEnd() {
-                el.classList.remove('pulse');
-                el.removeEventListener('animationend', onEnd);
-              });
-            }
-          }
-        });
+        data = await api(`/api/books/${encodeURIComponent(bookName)}/chapters/${chapter}`);
       } catch (err) {
-        showContent(`<div class="empty-state"><div class="icon">❌</div><p>Eroare: ${err.message}</p></div>`);
+        // Fallback: încearcă din IndexedDB (offline)
+        try {
+          const saved = await isChapterSaved(bookName, chapter);
+          if (saved && saved.data) {
+            data = saved.data;
+            fromOffline = true;
+          } else {
+            throw new Error('Capitolul nu este salvat offline');
+          }
+        } catch (e2) {
+          showContent(`<div class="empty-state"><div class="icon">❌</div><p>Eroare: ${err.message}</p><p style="margin-top:6px;color:var(--text-dim)">Capitolul nu este disponibil offline. Salvează-l când ai internet.</p></div>`);
+          return;
+        }
       }
+
+      const bookNameEncoded = encodeURIComponent(data.book ? data.book.nume : bookName);
+      const totalCapitole = data.total_capitole || data.versete.reduce((max, v) => Math.max(max, v.capitol || chapter), chapter);
+
+      let html = `
+        <div class="chapter-header">
+          <h1>${data.book ? data.book.nume : bookName} — Capitolul ${data.capitol}</h1>
+          <div class="subtitle">${data.total_versete || data.versete.length} versete ${fromOffline ? '· 📡 offline' : ''}</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+            <button class="save-btn" id="saveBtn" onclick="toggleSave('${bookNameEncoded}', ${data.capitol}, '${data.book ? data.book.nume : bookName}', ${totalCapitole})">
+              📥 Salvează offline
+            </button>
+            <span id="saveStatus" class="save-status"></span>
+          </div>
+          <div class="chapter-nav">
+            <a href="/" class="${!data.navigare || (!data.navigare.precedent && !data.navigare.urmator) ? 'active' : ''}" title="Înapoi la cărți">📖</a>
+            ${data.navigare && data.navigare.precedent ? `<a href="/carte/${bookNameEncoded}/capitol/${data.navigare.precedent}" title="Capitolul ${data.navigare.precedent}">◀</a>` : '<a class="disabled">◀</a>'}
+            <select id="chapterSelect" onchange="navigate('/carte/${bookNameEncoded}/capitol/' + this.value)">
+              ${Array.from({length: totalCapitole}, (_, i) => i + 1).map(c =>
+                `<option value="${c}" ${c === data.capitol ? 'selected' : ''}>Capitolul ${c}</option>`
+              ).join('')}
+            </select>
+            ${data.navigare && data.navigare.urmator ? `<a href="/carte/${bookNameEncoded}/capitol/${data.navigare.urmator}" title="Capitolul ${data.navigare.urmator}">▶</a>` : '<a class="disabled">▶</a>'}
+          </div>
+        </div>
+        <div class="verses">
+          ${data.versete.map(v => `
+            <div class="verse" id="${v.numar}">
+              <span class="num">${v.numar}.</span>
+              <span class="text">${escapeHtml(v.text)}</span>
+            </div>
+          `).join('')}
+        </div>
+      `;
+
+      showContent(html);
+
+      // Check if this chapter is saved
+      if (!fromOffline) checkIfSaved(bookNameEncoded, data.capitol);
+
+      // Scroll to verse if hash present (after render)
+      requestAnimationFrame(() => {
+        const hash = window.location.hash;
+        if (hash) {
+          const id = hash.substring(1);
+          const el = document.getElementById(id);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.classList.add('pulse');
+            el.addEventListener('animationend', function onEnd() {
+              el.classList.remove('pulse');
+              el.removeEventListener('animationend', onEnd);
+            });
+          }
+        }
+      });
     }
 
     async function renderSearch(q, carte, limit, offset) {
