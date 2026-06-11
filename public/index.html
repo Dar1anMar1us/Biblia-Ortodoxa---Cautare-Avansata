@@ -529,7 +529,7 @@
         showContent(html);
 
         // Check if this chapter is saved
-        checkIfSaved('${encodeURIComponent(bookName)}', ${chapter});
+        checkIfSaved(encodeURIComponent(bookName), chapter);
 
         // Scroll to verse if hash present (after render)
         requestAnimationFrame(() => {
