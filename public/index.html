@@ -293,6 +293,22 @@
 
     .hidden { display: none; }
 
+    /* Save button */
+    .save-btn {
+      background: var(--card-bg); color: var(--text); border: 1px solid #333;
+      padding: 5px 12px; border-radius: 4px; cursor: pointer;
+      font-size: 0.85em; font-family: inherit; transition: 0.2s;
+    }
+    .save-btn:hover { border-color: var(--gold); color: var(--gold); }
+    .save-btn.saved { border-color: #4caf50; color: #4caf50; }
+    .save-btn:disabled { opacity: 0.5; cursor: default; }
+    .save-status { font-size: 0.8em; color: var(--text-dim); line-height: 30px; }
+    .saved-chapter { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; background: var(--card-bg); border-radius: 3px; font-size: 0.85em; border: 1px solid #333; margin: 2px; }
+    .saved-chapter .del { cursor: pointer; color: #e57373; margin-left: 2px; }
+    .saved-chapter .del:hover { color: #ff0000; }
+    .saved-book { margin-bottom: 15px; }
+    .saved-book-title { color: var(--gold); margin-bottom: 6px; font-size: 1em; }
+
     @media (max-width: 600px) {
       .book-grid { grid-template-columns: repeat(2, 1fr); }
       header .container { flex-direction: column; }
@@ -329,6 +345,7 @@
       <p>Biblia Ortodoxă — Căutare full-text cu suport pentru cuvinte, fraze, AND/OR/NOT</p>
       <p style="margin-top: 5px">
         <a href="/">Toate cărțile</a> ·
+        <a href="/salvate" data-spa>📚 Salvate</a> ·
         <a href="/api/books">API</a> ·
         Sursă: <a href="https://www.bibliaortodoxa.ro" target="_blank">bibliaortodoxa.ro</a>
       </p>
@@ -357,6 +374,10 @@
 
       if (path === '/search') {
         return { page: 'search', q: params.get('q'), carte: params.get('carte'), limit: params.get('limit'), offset: parseInt(params.get('offset') || '0') };
+      }
+
+      if (path === '/salvate') {
+        return { page: 'saved' };
       }
 
       return { page: 'home' };
@@ -478,6 +499,12 @@
           <div class="chapter-header">
             <h1>${data.book.nume} — Capitolul ${data.capitol}</h1>
             <div class="subtitle">${data.total_versete} versete · ${data.book.testament === 'OT' ? 'Vechiul Testament' : data.book.testament === 'NT' ? 'Noul Testament' : 'Deuterocanonice'}</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+              <button class="save-btn" id="saveBtn" onclick="toggleSave('${encodeURIComponent(bookName)}', ${chapter}, '${data.book.nume}', ${data.total_capitole})">
+                📥 Salvează offline
+              </button>
+              <span id="saveStatus" class="save-status"></span>
+            </div>
             <div class="chapter-nav">
               <a href="/" class="${!data.navigare.precedent && !data.navigare.urmator ? 'active' : ''}" title="Înapoi la cărți">📖</a>
               ${data.navigare.precedent ? `<a href="/carte/${encodeURIComponent(data.book.nume)}/capitol/${data.navigare.precedent}" title="Capitolul ${data.navigare.precedent}">◀</a>` : '<a class="disabled">◀</a>'}
@@ -500,6 +527,9 @@
         `;
 
         showContent(html);
+
+        // Check if this chapter is saved
+        checkIfSaved('${encodeURIComponent(bookName)}', ${chapter});
 
         // Scroll to verse if hash present (after render)
         requestAnimationFrame(() => {
@@ -640,6 +670,9 @@
         case 'chapter':
           await renderChapter(route.bookName, route.chapter);
           break;
+        case 'saved':
+          await renderSaved();
+          break;
         case 'search':
           await renderSearch(route.q, route.carte, route.limit, route.offset);
           break;
@@ -712,6 +745,182 @@
         document.getElementById('suggestions').style.display = 'none';
       }
     });
+
+    // ─── Offline simplu: IndexedDB ───────────────────────────
+
+    const DB_NAME = 'biblia-offline';
+    const DB_VER = 1;
+
+    function openDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, DB_VER);
+        req.onupgradeneeded = () => {
+          const db = req.result;
+          if (!db.objectStoreNames.contains('capitole')) {
+            const store = db.createObjectStore('capitole', { keyPath: 'id' });
+            store.createIndex('carte', 'carte', { unique: false });
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    // Salvează capitol
+    async function saveChapter(bookName, bookEncoded, chapter, bookTotalChapters) {
+      const db = await openDB();
+      const data = await api(`/api/books/${bookEncoded}/chapters/${chapter}`);
+      const entry = {
+        id: `${bookName}|${chapter}`,
+        carte: bookName,
+        carte_encoded: bookEncoded,
+        capitol: chapter,
+        total_capitole: bookTotalChapters,
+        data: data,
+        salvat: Date.now()
+      };
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction('capitole', 'readwrite');
+        tx.objectStore('capitole').put(entry);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+      db.close();
+    }
+
+    // Șterge capitol
+    async function deleteSavedChapter(bookName, chapter) {
+      const db = await openDB();
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction('capitole', 'readwrite');
+        tx.objectStore('capitole').delete(`${bookName}|${chapter}`);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+      db.close();
+    }
+
+    // Verifică dacă e salvat
+    async function isChapterSaved(bookName, chapter) {
+      try {
+        const db = await openDB();
+        const result = await new Promise((resolve) => {
+          const tx = db.transaction('capitole', 'readonly');
+          const req = tx.objectStore('capitole').get(`${bookName}|${chapter}`);
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => resolve(null);
+        });
+        db.close();
+        return result;
+      } catch(e) { return null; }
+    }
+
+    // Toate capitolele salvate
+    async function getAllSaved() {
+      try {
+        const db = await openDB();
+        const result = await new Promise((resolve) => {
+          const tx = db.transaction('capitole', 'readonly');
+          const req = tx.objectStore('capitole').getAll();
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => resolve([]);
+        });
+        db.close();
+        return result.sort((a, b) => a.carte.localeCompare(b.carte) || a.capitol - b.capitol);
+      } catch(e) { return []; }
+    }
+
+    // UI: toggle save
+    async function toggleSave(bookEncoded, chapter, bookName, totalChapters) {
+      const btn = document.getElementById('saveBtn');
+      const status = document.getElementById('saveStatus');
+      if (!btn || btn.disabled) return;
+
+      // If already saved, delete
+      const existing = await isChapterSaved(bookName, chapter);
+      if (existing) {
+        await deleteSavedChapter(bookName, chapter);
+        btn.textContent = '📥 Salvează offline';
+        btn.classList.remove('saved');
+        btn.disabled = false;
+        status.textContent = '🗑 Șters';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = '⏳ Se salvează...';
+      try {
+        await saveChapter(bookName, bookEncoded, chapter, totalChapters);
+        btn.textContent = '✓ Salvat ✔';
+        btn.classList.add('saved');
+        btn.disabled = false;
+        status.textContent = '';
+      } catch(e) {
+        btn.textContent = '✗ Eroare';
+        btn.disabled = false;
+        status.textContent = 'Nu s-a putut salva';
+      }
+    }
+
+    // Verifică UI după render
+    async function checkIfSaved(bookEncoded, chapter) {
+      try {
+        const bookName = decodeURIComponent(bookEncoded);
+        const existing = await isChapterSaved(bookName, chapter);
+        if (existing) {
+          const btn = document.getElementById('saveBtn');
+          if (btn) {
+            btn.textContent = '✓ Salvat ✔';
+            btn.classList.add('saved');
+          }
+        }
+      } catch(e) {}
+    }
+
+    // Pagina /salvate
+    async function renderSaved() {
+      showLoader('Se încarcă...');
+      const items = await getAllSaved();
+
+      if (items.length === 0) {
+        showContent(`<div class="empty-state"><div class="icon">📥</div><p>Niciun capitol salvat.</p><p style="margin-top:6px;color:var(--text-dim)">Navighează la un capitol și apasă "Salvează offline".</p><p style="margin-top:12px"><a href="/" class="facet">📖 Navighează cărți</a></p></div>`);
+        return;
+      }
+
+      const byBook = {};
+      items.forEach(item => {
+        if (!byBook[item.carte]) byBook[item.carte] = [];
+        byBook[item.carte].push(item);
+      });
+
+      let html = `<h2 style="color:var(--gold);margin-bottom:15px">📚 Capitole salvate (${items.length})</h2>`;
+      html += `<div style="margin-bottom:15px;display:flex;gap:8px;flex-wrap:wrap"><button class="save-btn" onclick="deleteAllSaved()">🗑 Șterge tot</button></div>`;
+
+      for (const [carte, chapters] of Object.entries(byBook)) {
+        html += `<div class="saved-book"><div class="saved-book-title">${carte} <span style="color:var(--text-dim);font-size:0.8em">(${chapters.length})</span></div>`;
+        chapters.forEach(ch => {
+          html += `<span class="saved-chapter"><a href="/carte/${ch.carte_encoded}/capitol/${ch.capitol}" data-spa style="color:var(--text);text-decoration:none">${ch.capitol}</a><span class="del" onclick="deleteOne('${ch.carte}', ${ch.capitol}, this)">×</span></span>`;
+        });
+        html += `</div>`;
+      }
+
+      showContent(html);
+    }
+
+    async function deleteOne(carte, capitol, el) {
+      await deleteSavedChapter(carte, capitol);
+      const parent = el.closest('.saved-chapter');
+      if (parent) parent.remove();
+    }
+
+    async function deleteAllSaved() {
+      if (!confirm('Ștergi toate capitolele salvate?')) return;
+      const items = await getAllSaved();
+      for (const item of items) {
+        await deleteSavedChapter(item.carte, item.capitol);
+      }
+      renderSaved();
+    }
 
     // ─── Initial Render ──────────────────────────────────────
     render();
