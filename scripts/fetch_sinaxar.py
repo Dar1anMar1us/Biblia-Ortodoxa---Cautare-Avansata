@@ -89,7 +89,8 @@ def fetch_sinaxar(year, month, day):
     
     raw = result.stdout
     # Detect encoding from meta tag or default to iso-8859-2
-    html = raw.decode('iso-8859-2', errors='replace')
+    # Site uses UTF-8 (confirmed from meta charset tag)
+    html = raw.decode('utf-8', errors='replace')
     
     parser = SinaxarParser()
     try:
