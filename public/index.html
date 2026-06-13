@@ -328,17 +328,20 @@
     /* Calendar styles */
     .cal-nav {
       display: flex; align-items: center; justify-content: center;
-      gap: 15px; margin-bottom: 20px; flex-wrap: wrap;
+      gap: 8px; margin-bottom: 20px; flex-wrap: wrap;
     }
     .cal-nav button, .cal-nav select {
       background: var(--card-bg); color: var(--text); border: 1px solid #333;
-      border-radius: 4px; padding: 6px 14px; font-size: 0.95em;
+      border-radius: 4px; padding: 6px 10px; font-size: 0.95em;
       cursor: pointer; font-family: inherit;
     }
     .cal-nav button:hover { border-color: var(--gold); }
     .cal-nav select:hover { border-color: var(--gold); }
     .cal-nav select:focus { outline: none; border-color: var(--gold); }
-    .cal-title { font-size: 1.3em; color: var(--gold); text-align: center; min-width: 200px; }
+    .cal-nav .nav-group {
+      display: flex; align-items: center; gap: 4px;
+    }
+    .cal-title { font-size: 1.1em; color: var(--gold); text-align: center; min-width: 140px; }
 
     .cal-grid {
       display: grid;
@@ -405,6 +408,19 @@
     .cal-today-banner .label { color: var(--text-dim); font-size: 0.85em; }
     .cal-today-banner .value { color: var(--gold); font-size: 1em; }
     .cal-today-banner .saint { font-size: 0.9em; color: var(--text); }
+
+    @media (max-width: 600px) {
+      .cal-nav { gap: 6px; }
+      .cal-nav button, .cal-nav select { padding: 5px 7px; font-size: 0.85em; }
+      .cal-title { font-size: 0.95em; min-width: 100px; }
+      .cal-grid { gap: 2px; }
+      .cal-day { padding: 5px 2px; font-size: 0.75em; }
+      .cal-day .day-num { font-size: 0.9em; }
+      .cal-day .day-name { display: none; }
+      .cal-header { font-size: 0.7em; padding: 4px 0; letter-spacing: 0.5px; }
+      .cal-day.sarbatoare { border-left-width: 2px; }
+      .cal-day.post { border-left-width: 2px; }
+    }
   </style>
 </head>
 <body>
@@ -1113,18 +1129,22 @@
       // Navigation
       let html = `
         <div class="cal-nav">
-          <button onclick="changeMonth(${an}, ${luna}, -1)">◀</button>
-          <select id="calMonthSelect" onchange="changeCalendarMonth(this)">
-            ${MONTH_NAMES.map((m, i) => `<option value="${i+1}" ${i+1 === luna ? 'selected' : ''}>${m}</option>`).join('')}
-          </select>
+          <div class="nav-group">
+            <button onclick="changeMonth(${an}, ${luna}, -1)">◀</button>
+            <select id="calMonthSelect" onchange="changeCalendarMonth(this)">
+              ${MONTH_NAMES.map((m, i) => `<option value="${i+1}" ${i+1 === luna ? 'selected' : ''}>${m}</option>`).join('')}
+            </select>
+          </div>
           <span class="cal-title">${luna_nume} ${an}</span>
-          <select id="calYearSelect" onchange="changeCalendarYear(this)">
-            ${Array.from({length: 13}, (_, i) => 2025 + i).map(y =>
-              `<option value="${y}" ${y === an ? 'selected' : ''}>${y}</option>`
-            ).join('')}
-          </select>
-          <button onclick="changeMonth(${an}, ${luna}, 1)">▶</button>
-        </div>
+          <div class="nav-group">
+            <select id="calYearSelect" onchange="changeCalendarYear(this)">
+              ${Array.from({length: 13}, (_, i) => 2025 + i).map(y =>
+                `<option value="${y}" ${y === an ? 'selected' : ''}>${y}</option>`
+              ).join('')}
+            </select>
+            <button onclick="changeMonth(${an}, ${luna}, 1)">▶</button>
+          </div>
+        </div>`;
         ${todayHtml}
         <div class="cal-grid">
           ${DAY_NAMES.map(d => `<div class="cal-header">${d}</div>`).join('')}
