@@ -377,9 +377,29 @@
     .cal-detail .sunday-info { color: var(--gold-light); font-size: 0.9em; margin: 6px 0; font-style: italic; }
     .cal-detail .sunday-gospel { color: var(--text-dim); font-size: 0.85em; margin: 4px 0; }
     .cal-detail .feast { color: var(--gold); font-weight: bold; }
-    .cal-detail .legend { margin-top: 12px; display: flex; gap: 15px; flex-wrap: wrap; font-size: 0.8em; }
-    .cal-detail .legend-item { display: flex; align-items: center; gap: 5px; color: var(--text-dim); }
-    .cal-detail .legend-item .dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+
+    /* Calendar footer — legend + source */
+    .cal-footer {
+      margin-top: 20px; padding: 16px 0 4px;
+      border-top: 1px solid #2a2a3e;
+      display: flex; flex-wrap: wrap; align-items: center;
+      justify-content: space-between; gap: 10px;
+    }
+    .cal-legend {
+      display: flex; gap: 18px; flex-wrap: wrap; font-size: 0.8em;
+    }
+    .cal-legend-item {
+      display: flex; align-items: center; gap: 6px; color: var(--text-dim);
+    }
+    .cal-legend-item .dot {
+      width: 8px; height: 8px; border-radius: 50%; display: inline-block;
+    }
+    .cal-source {
+      font-size: 0.75em; color: var(--text-dim); opacity: 0.6;
+      text-align: right;
+    }
+    .cal-source a { color: var(--gold); text-decoration: none; opacity: 0.8; }
+    .cal-source a:hover { opacity: 1; text-decoration: underline; }
 
     .cal-today-banner {
       background: rgba(201,168,76,0.08);
@@ -1145,12 +1165,16 @@
         html += '<p style="color:var(--text-dim)">Nicio informație disponibilă.</p>';
       }
 
-      // Legend
+      // Legend + source
       html += `
-        <div class="legend">
-          <span class="legend-item"><span class="dot" style="background:var(--gold)"></span> Sărbătoare / Duminică</span>
-          <span class="legend-item"><span class="dot" style="background:#c0392b"></span> Zi de post</span>
-          <span class="legend-item" style="padding-left:4px">Date preluate de pe noutati-ortodoxe.ro</span>
+        <div class="cal-footer">
+          <div class="cal-legend">
+            <span class="cal-legend-item"><span class="dot" style="background:var(--gold)"></span> Sărbătoare</span>
+            <span class="cal-legend-item"><span class="dot" style="background:#c0392b"></span> Post</span>
+          </div>
+          <div class="cal-source">
+            sursă: <a href="https://www.noutati-ortodoxe.ro/calendar-ortodox/" target="_blank">noutati-ortodoxe.ro</a>
+          </div>
         </div>
       `;
 
