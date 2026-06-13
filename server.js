@@ -466,6 +466,45 @@ app.get('/api/sinaxar/:an/:luna/:zi', (req, res) => {
   res.json({ found: true, ...row });
 });
 
+// ─── GET /api/sinaxar/search?q=... ─────────────────────────
+app.get('/api/sinaxar/search', (req, res) => {
+  const db = getDb();
+  const q = (req.query.q || '').trim();
+  if (!q || q.length < 2) return res.json([]);
+
+  // Search in calendar.sfinti (saint names per day)
+  // Group by (luna, zi) since saints repeat yearly
+  const rows = db.prepare(`
+    SELECT luna, zi, sfinti
+    FROM calendar
+    WHERE sfinti LIKE ? AND sfinti != ''
+    GROUP BY luna, zi
+    ORDER BY luna, zi
+    LIMIT 20
+  `).all(`%${q}%`);
+
+  // Also search in sinaxar text for full-text mentions
+  const extraRows = db.prepare(`
+    SELECT s.luna, s.zi, s.titlu
+    FROM sinaxar s
+    WHERE (s.titlu LIKE ? OR s.text LIKE ?) AND s.titlu != ''
+      AND NOT EXISTS (
+        SELECT 1 FROM calendar c
+        WHERE c.luna = s.luna AND c.zi = s.zi AND c.sfinti LIKE ?
+      )
+    GROUP BY s.luna, s.zi
+    ORDER BY s.luna, s.zi
+    LIMIT 10
+  `).all(`%${q}%`, `%${q}%`, `%${q}%`);
+
+  const results = [
+    ...rows.map(r => ({ luna: r.luna, zi: r.zi, sfant: r.sfinti })),
+    ...extraRows.map(r => ({ luna: r.luna, zi: r.zi, sfant: r.titlu }))
+  ];
+
+  res.json(results);
+});
+
 // ─── Serve static files (public/) ──────────────────────────
 app.use(express.static(path.join(__dirname, 'public')));
 

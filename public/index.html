@@ -434,6 +434,52 @@
       user-select: none;
     }
 
+    /* Saint search */
+    .cal-saint-search {
+      margin-top: 20px; position: relative;
+    }
+    .cal-saint-search input {
+      width: 100%; padding: 10px 14px;
+      background: var(--card-bg); color: var(--text);
+      border: 1px solid #333; border-radius: 6px;
+      font-size: 0.9em; font-family: inherit; outline: none;
+      transition: 0.2s;
+    }
+    .cal-saint-search input:focus {
+      border-color: var(--gold);
+    }
+    .cal-saint-search input::placeholder {
+      color: var(--text-dim); opacity: 0.7;
+    }
+    .cal-search-results {
+      position: absolute; top: 100%; left: 0; right: 0;
+      background: var(--card-bg); border: 1px solid #333;
+      border-top: none; border-radius: 0 0 6px 6px;
+      max-height: 260px; overflow-y: auto;
+      z-index: 10; display: none;
+    }
+    .cal-search-results.open { display: block; }
+    .cal-search-result-item {
+      padding: 10px 14px; cursor: pointer;
+      border-bottom: 1px solid #2a2a3e;
+      transition: 0.15s;
+    }
+    .cal-search-result-item:last-child { border-bottom: none; }
+    .cal-search-result-item:hover {
+      background: #252545;
+    }
+    .cal-search-result-item .date {
+      color: var(--gold); font-size: 0.8em;
+      font-weight: bold;
+    }
+    .cal-search-result-item .name {
+      font-size: 0.88em; color: var(--text); margin-top: 2px;
+    }
+    .cal-search-no-results {
+      padding: 14px; color: var(--text-dim); font-size: 0.85em;
+      text-align: center;
+    }
+
     @media (max-width: 600px) {
       .cal-nav { gap: 6px; }
       .cal-nav button, .cal-nav select { padding: 5px 7px; font-size: 0.85em; }
@@ -1215,6 +1261,14 @@
         html += '<div id="calDetail"><p style="color:var(--text-dim)">Nicio informație disponibilă.</p></div>';
       }
 
+      // Saint search
+      html += `
+        <div class="cal-saint-search">
+          <input type="text" id="saintSearchInput" placeholder="🔍 Caută un sfânt după nume..." autocomplete="off" oninput="searchSaint(this)">
+          <div id="saintSearchResults" class="cal-search-results"></div>
+        </div>
+      `;
+
       showContent(html);
     }
 
@@ -1334,6 +1388,76 @@
       if (detailEl) {
         detailEl.innerHTML = renderDayDetail(info, zi, data.luna_nume, data.an);
       }
+      // Scroll to top of calendar
+      const header = document.querySelector('.cal-nav');
+      if (header) header.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // ─── Saint search ─────────────────────────────────────
+    let _searchTimeout = null;
+
+    // Close search dropdown on outside click
+    document.addEventListener('click', function(e) {
+      const container = document.querySelector('.cal-saint-search');
+      const results = document.getElementById('saintSearchResults');
+      if (results && container && !container.contains(e.target)) {
+        results.classList.remove('open');
+      }
+    });
+
+    function searchSaint(input) {
+      clearTimeout(_searchTimeout);
+      const q = input.value.trim();
+      const resultsEl = document.getElementById('saintSearchResults');
+      if (!resultsEl) return;
+
+      if (q.length < 2) {
+        resultsEl.classList.remove('open');
+        resultsEl.innerHTML = '';
+        return;
+      }
+
+      _searchTimeout = setTimeout(async () => {
+        try {
+          const resp = await fetch(`/api/sinaxar/search?q=${encodeURIComponent(q)}`);
+          const data = await resp.json();
+          if (!data || data.length === 0) {
+            resultsEl.innerHTML = '<div class="cal-search-no-results">Niciun sfânt găsit</div>';
+            resultsEl.classList.add('open');
+            return;
+          }
+          resultsEl.innerHTML = data.map(r => {
+            const luni = ['','Ianuarie','Februarie','Martie','Aprilie','Mai','Iunie',
+                         'Iulie','August','Septembrie','Octombrie','Noiembrie','Decembrie'];
+            const numeLuna = luni[r.luna] || r.luna;
+            const saintName = r.sfant.replace(/^Sinaxar \d+ /, '').substring(0, 80);
+            return `<div class="cal-search-result-item" onclick="navigateToSaint(${r.zi}, ${r.luna})">
+              <div class="date">${r.zi} ${numeLuna}</div>
+              <div class="name">${escapeHtml(saintName)}</div>
+            </div>`;
+          }).join('');
+          resultsEl.classList.add('open');
+        } catch(e) {
+          resultsEl.innerHTML = '<div class="cal-search-no-results">Eroare la căutare</div>';
+          resultsEl.classList.add('open');
+        }
+      }, 250);
+    }
+
+    function navigateToSaint(zi, luna) {
+      // Close search results
+      const resultsEl = document.getElementById('saintSearchResults');
+      if (resultsEl) { resultsEl.classList.remove('open'); resultsEl.innerHTML = ''; }
+      const inputEl = document.getElementById('saintSearchInput');
+      if (inputEl) inputEl.value = '';
+
+      // Navigate calendar to that date (keep current year)
+      const data = window._calData;
+      let year = data && data.an ? data.an : 2026;
+      window._calAn = year;
+      window._calLuna = luna;
+      window._calZi = zi;
+      renderCalendar();
     }
 
     // ─── Initial Render ──────────────────────────────────────
