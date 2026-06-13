@@ -152,6 +152,9 @@ biblia.db
 cypress/screenshots/
 cypress/videos/
 
+# Screenshots
+public/screenshot.png
+
 # OS
 .DS_Store
 Thumbs.db
