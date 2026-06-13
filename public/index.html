@@ -1161,6 +1161,7 @@
             if (isToday) cls += ' today';
             if (tip === 'sarbatoare') cls += ' sarbatoare';
             if (isPost) cls += ' post';
+            if (isSelected) cls += ' selected';
             const shortSaint = info && info.sfinti ? info.sfinti.substring(0, 30).replace(/\(†\)\s*|†\s*/g, '') : '';
             return `<div class="${cls}" onclick="selectDay(${zi})" title="${escapeHtml(info ? (info.sfinti || '') : '')}">
               <div class="day-num">${zi}</div>
@@ -1198,6 +1199,7 @@
 
       let html = `<div class="cal-detail">
         <h2>${zi} ${luna_nume} ${an} <span class="day-of-week">${info.zi_sapt || ''}</span></h2>
+        <div class="saint-name">${escapeHtml(info.sfinti || '—')}</div>
         ${tipText ? `<div class="feast">${tipText}</div>` : ''}
         ${info.comentarii ? `<div class="fast-info">${escapeHtml(info.comentarii)}</div>` : ''}
         ${info.duminica_titlu ? `<div class="sunday-info">${escapeHtml(info.duminica_titlu)}</div>` : ''}
