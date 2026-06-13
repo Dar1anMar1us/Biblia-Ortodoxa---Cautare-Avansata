@@ -483,26 +483,7 @@ app.get('/api/sinaxar/search', (req, res) => {
     LIMIT 20
   `).all(`%${q}%`);
 
-  // Also search in sinaxar text for full-text mentions
-  const extraRows = db.prepare(`
-    SELECT s.luna, s.zi, s.titlu
-    FROM sinaxar s
-    WHERE (s.titlu LIKE ? OR s.text LIKE ?) AND s.titlu != ''
-      AND NOT EXISTS (
-        SELECT 1 FROM calendar c
-        WHERE c.luna = s.luna AND c.zi = s.zi AND c.sfinti LIKE ?
-      )
-    GROUP BY s.luna, s.zi
-    ORDER BY s.luna, s.zi
-    LIMIT 10
-  `).all(`%${q}%`, `%${q}%`, `%${q}%`);
-
-  const results = [
-    ...rows.map(r => ({ luna: r.luna, zi: r.zi, sfant: r.sfinti })),
-    ...extraRows.map(r => ({ luna: r.luna, zi: r.zi, sfant: r.titlu }))
-  ];
-
-  res.json(results);
+  res.json(rows.map(r => ({ luna: r.luna, zi: r.zi, sfant: r.sfinti })));
 });
 
 // ─── Serve static files (public/) ──────────────────────────
