@@ -1119,15 +1119,13 @@
         todayHtml = `
           <div class="cal-today-banner" style="position:relative">
             <span class="cal-pin">📌</span>
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;width:100%;padding-right:28px">
+            <div style="width:100%">
               <div>
                 <div class="label">Astăzi, ${astazi.zi} ${luna_nume} ${an}</div>
                 <div class="saint">${escapeHtml(astazi.sfinti || '—')}</div>
               </div>
-              <div style="text-align:right">
-                ${tipSf ? `<div class="value">${tipSf}</div>` : ''}
-                ${extraInfo ? `<div style="font-size:0.85em;margin-top:4px">${extraInfo}</div>` : ''}
-              </div>
+              ${tipSf ? `<div style="margin-top:6px">⭐ ${tipSf}</div>` : ''}
+              ${extraInfo ? `<div style="margin-top:4px;font-size:0.85em">${extraInfo}</div>` : ''}
             </div>
             <div class="cal-legend" style="margin-top:10px;padding-top:8px;border-top:1px solid rgba(201,168,76,0.2)">
               <span class="cal-legend-item"><span class="dot" style="background:var(--gold)"></span> Sărbătoare</span>
