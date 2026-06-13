@@ -400,6 +400,13 @@
     .cal-today-banner .value { color: var(--gold); font-size: 1em; }
     .cal-today-banner .saint { font-size: 0.9em; color: var(--text); }
 
+    /* Decorative pin */
+    .cal-pin {
+      position: absolute; top: 8px; right: 12px;
+      font-size: 13px; opacity: 0.25; pointer-events: none;
+      user-select: none;
+    }
+
     @media (max-width: 600px) {
       .cal-nav { gap: 6px; }
       .cal-nav button, .cal-nav select { padding: 5px 7px; font-size: 0.85em; }
@@ -1131,7 +1138,8 @@
 
       // Navigation
       let html = `
-        <div class="cal-nav">
+        <div class="cal-nav" style="position:relative">
+          <span class="cal-pin">📌</span>
           <div class="nav-group">
             <button onclick="changeMonth(${an}, ${luna}, -1)">◀</button>
             <select id="calMonthSelect" onchange="changeCalendarMonth(this)">
