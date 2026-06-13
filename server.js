@@ -445,12 +445,22 @@ app.get('/api/calendar/:an/:luna', (req, res) => {
 // ─── GET /api/sinaxar/:an/:luna/:zi ───────────────────────────
 app.get('/api/sinaxar/:an/:luna/:zi', (req, res) => {
   const db = getDb();
-  const { an, luna, zi } = req.params;
+  let { an, luna, zi } = req.params;
+  an = parseInt(an); luna = parseInt(luna); zi = parseInt(zi);
 
-  const row = db.prepare(`
+  // Try requested year first
+  let row = db.prepare(`
     SELECT titlu, text, img_local, img_original
     FROM sinaxar WHERE an = ? AND luna = ? AND zi = ?
-  `).get(parseInt(an), parseInt(luna), parseInt(zi));
+  `).get(an, luna, zi);
+
+  // Fallback to 2026 (saint texts are the same every year)
+  if (!row) {
+    row = db.prepare(`
+      SELECT titlu, text, img_local, img_original
+      FROM sinaxar WHERE an = 2026 AND luna = ? AND zi = ?
+    `).get(luna, zi);
+  }
 
   if (!row) return res.json({ found: false });
   res.json({ found: true, ...row });

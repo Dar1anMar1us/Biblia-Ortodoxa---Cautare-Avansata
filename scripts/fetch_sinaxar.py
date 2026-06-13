@@ -89,8 +89,14 @@ def fetch_sinaxar(year, month, day):
     
     raw = result.stdout
     # Detect encoding from meta tag or default to iso-8859-2
-    # Site uses UTF-8 (confirmed from meta charset tag)
-    html = raw.decode('utf-8', errors='replace')
+    # Site says UTF-8 in meta tag but content is actually Windows-1250
+    # (bytes 0xE3=ă, 0xFE=ț, etc. are W1250, not valid UTF-8)
+    try:
+        html = raw.decode('utf-8')
+        # If UTF-8 succeeds fully, great
+    except UnicodeDecodeError:
+        # Fall back to Windows-1250 which handles all Romanian chars
+        html = raw.decode('windows-1250', errors='replace')
     
     parser = SinaxarParser()
     try:
