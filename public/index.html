@@ -1109,7 +1109,11 @@
       let todayHtml = '';
       if (astazi && astazi.zi) {
         const tipSf = astazi.tip === 'sarbatoare' ? '⭐ Sărbătoare' : '';
-        const postInfo = astazi.comentarii && astazi.comentarii.toLowerCase().includes('post') ? `🔴 ${astazi.comentarii}` : '';
+        let extraInfo = '';
+        if (astazi.comentarii) {
+          const isPost = astazi.comentarii.toLowerCase().includes('post');
+          extraInfo = isPost ? `🔴 ${escapeHtml(astazi.comentarii)}` : `📌 ${escapeHtml(astazi.comentarii)}`;
+        }
         todayHtml = `
           <div class="cal-today-banner">
             <div>
@@ -1118,7 +1122,7 @@
             </div>
             <div style="text-align:right">
               ${tipSf ? `<div class="value">${tipSf}</div>` : ''}
-              ${postInfo ? `<div class="fast-info" style="font-size:0.9em">${postInfo}</div>` : ''}
+              ${extraInfo ? `<div style="font-size:0.85em;margin-top:4px">${extraInfo}</div>` : ''}
             </div>
           </div>
         `;
@@ -1190,15 +1194,12 @@
     }
 
     function renderDayDetail(info, zi, luna_nume, an) {
-      const tipText = info.tip === 'sarbatoare' ? '⭐ Sărbătoare' : info.tip === 'duminica' ? '✝ Duminică' : '—';
-      const hasPost = info.comentarii && info.comentarii.toLowerCase().includes('post');
-      const postClass = hasPost ? 'fast-info' : '';
+      const tipText = info.tip === 'sarbatoare' ? '⭐ Sărbătoare' : info.tip === 'duminica' ? '✝ Duminică' : '';
 
       let html = `<div class="cal-detail">
         <h2>${zi} ${luna_nume} ${an} <span class="day-of-week">${info.zi_sapt || ''}</span></h2>
-        ${info.tip === 'sarbatoare' ? `<div class="feast">${tipText}</div>` : (info.tip === 'duminica' ? `<div class="sunday-info">${tipText}</div>` : '')}
-        <div class="saint-name">${escapeHtml(info.sfinti || '—')}</div>
-        ${info.comentarii ? `<div class="${postClass}">${escapeHtml(info.comentarii)}</div>` : ''}
+        ${tipText ? `<div class="feast">${tipText}</div>` : ''}
+        ${info.comentarii ? `<div class="fast-info">${escapeHtml(info.comentarii)}</div>` : ''}
         ${info.duminica_titlu ? `<div class="sunday-info">${escapeHtml(info.duminica_titlu)}</div>` : ''}
         ${info.duminica_subtitlu ? `<div class="sunday-gospel">${escapeHtml(info.duminica_subtitlu)}</div>` : ''}
       </div>`;
