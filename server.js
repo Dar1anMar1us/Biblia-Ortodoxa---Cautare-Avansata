@@ -391,6 +391,57 @@ app.get('/api/search/suggest', (req, res) => {
   });
 });
 
+// ─── GET /api/calendar ────────────────────────────────────────
+// ─── GET /api/calendar/:an/:luna ──────────────────────────────
+app.get('/api/calendar', (req, res) => {
+  const now = new Date();
+  res.redirect(`/api/calendar/${now.getFullYear()}/${now.getMonth() + 1}`);
+});
+
+app.get('/api/calendar/:an/:luna', (req, res) => {
+  const db = getDb();
+  const now = new Date();
+  const an = parseInt(req.params.an);
+  const luna = parseInt(req.params.luna);
+
+  // Validate
+  if (isNaN(an) || an < 2025 || an > 2037) return res.status(400).json({ error: 'An invalid. 2025-2037.' });
+  if (isNaN(luna) || luna < 1 || luna > 12) return res.status(400).json({ error: 'Luna invalidă. 1-12.' });
+
+  const monthNames = [
+    'ianuarie', 'februarie', 'martie', 'aprilie', 'mai', 'iunie',
+    'iulie', 'august', 'septembrie', 'octombrie', 'noiembrie', 'decembrie'
+  ];
+
+  const days = db.prepare(`
+    SELECT zi, zi_sapt, sfinti, tip, comentarii, duminica_titlu, duminica_subtitlu
+    FROM calendar
+    WHERE an = ? AND luna = ?
+    ORDER BY zi
+  `).all(an, luna);
+
+  // Get today's info
+  const today = db.prepare(`
+    SELECT zi, zi_sapt, sfinti, tip, comentarii
+    FROM calendar WHERE an = ? AND luna = ? AND zi = ?
+  `).get(now.getFullYear(), now.getMonth() + 1, now.getDate());
+
+  // Determine post info for the month — extract unique fasting rules
+  const postDays = days.filter(d => d.comentarii && (
+    d.comentarii.toLowerCase().includes('post')
+  )).map(d => ({ zi: d.zi, info: d.comentarii }));
+
+  res.json({
+    an,
+    luna,
+    luna_nume: monthNames[luna - 1],
+    total_zile: days.length,
+    astazi: today || null,
+    zile: days,
+    posturi: postDays.slice(0, 10) // top fasting days
+  });
+});
+
 // ─── Serve static files (public/) ──────────────────────────
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -417,6 +468,9 @@ app.get('/sitemap.xml', (req, res) => {
 
   // Homepage
   urls += `  <url>\n    <loc>https://bibliaortodoxa.org/</loc>\n    <changefreq>weekly</changefreq>\n    <priority>1.0</priority>\n  </url>\n`;
+
+  // Calendar page
+  urls += `  <url>\n    <loc>https://bibliaortodoxa.org/calendar</loc>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
 
   // Each book + chapters
   for (const book of books) {

@@ -314,15 +314,98 @@
       header .container { flex-direction: column; }
       .search-box { width: 100%; }
     }
+
+    /* Navigation tabs */
+    .nav-tab {
+      color: var(--text-dim); text-decoration: none;
+      padding: 4px 12px; border-radius: 4px;
+      border: 1px solid transparent; transition: 0.2s;
+      font-size: 0.9em;
+    }
+    .nav-tab:hover { color: var(--gold); border-color: #333; }
+    .nav-tab.active { color: var(--gold); border-color: var(--gold); background: rgba(201,168,76,0.1); }
+
+    /* Calendar styles */
+    .cal-nav {
+      display: flex; align-items: center; justify-content: center;
+      gap: 15px; margin-bottom: 20px; flex-wrap: wrap;
+    }
+    .cal-nav button, .cal-nav select {
+      background: var(--card-bg); color: var(--text); border: 1px solid #333;
+      border-radius: 4px; padding: 6px 14px; font-size: 0.95em;
+      cursor: pointer; font-family: inherit;
+    }
+    .cal-nav button:hover { border-color: var(--gold); }
+    .cal-nav select:hover { border-color: var(--gold); }
+    .cal-nav select:focus { outline: none; border-color: var(--gold); }
+    .cal-title { font-size: 1.3em; color: var(--gold); text-align: center; min-width: 200px; }
+
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 3px; margin-bottom: 20px;
+    }
+    .cal-header {
+      text-align: center; font-size: 0.8em; color: var(--gold);
+      padding: 6px 0; font-weight: bold; text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .cal-day {
+      text-align: center; padding: 8px 4px; border-radius: 4px;
+      background: var(--card-bg); border: 1px solid #2a2a3e;
+      cursor: pointer; transition: 0.2s; font-size: 0.9em;
+      position: relative;
+    }
+    .cal-day .day-num { font-weight: bold; font-size: 1em; }
+    .cal-day .day-name { font-size: 0.65em; color: var(--text-dim); display: block; margin-top: 2px; }
+    .cal-day:hover { border-color: var(--gold); background: #252545; }
+    .cal-day.today { border-color: var(--gold); box-shadow: 0 0 8px rgba(201,168,76,0.3); }
+    .cal-day.selected { border-color: var(--gold); background: rgba(201,168,76,0.15); }
+    .cal-day.sarbatoare { border-left: 3px solid var(--gold); }
+    .cal-day.post { border-left: 3px solid #c0392b; }
+    .cal-day.empty { background: transparent; border: none; cursor: default; }
+    .cal-day.empty:hover { border: none; }
+
+    .cal-detail {
+      background: var(--card-bg); border: 1px solid #333;
+      border-radius: 6px; padding: 20px; margin-top: 10px;
+    }
+    .cal-detail h2 { color: var(--gold); font-size: 1.2em; margin-bottom: 8px; }
+    .cal-detail .day-of-week { color: var(--text-dim); font-size: 0.9em; }
+    .cal-detail .saint-name { font-size: 1.1em; margin: 10px 0; line-height: 1.6; }
+    .cal-detail .fast-info { color: #e57373; font-size: 0.9em; margin: 6px 0; }
+    .cal-detail .sunday-info { color: var(--gold-light); font-size: 0.9em; margin: 6px 0; font-style: italic; }
+    .cal-detail .sunday-gospel { color: var(--text-dim); font-size: 0.85em; margin: 4px 0; }
+    .cal-detail .feast { color: var(--gold); font-weight: bold; }
+    .cal-detail .legend { margin-top: 12px; display: flex; gap: 15px; flex-wrap: wrap; font-size: 0.8em; }
+    .cal-detail .legend-item { display: flex; align-items: center; gap: 5px; color: var(--text-dim); }
+    .cal-detail .legend-item .dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+
+    .cal-today-banner {
+      background: rgba(201,168,76,0.08);
+      border: 1px solid var(--gold);
+      border-radius: 6px; padding: 12px 18px; margin-bottom: 20px;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 8px;
+    }
+    .cal-today-banner .label { color: var(--text-dim); font-size: 0.85em; }
+    .cal-today-banner .value { color: var(--gold); font-size: 1em; }
+    .cal-today-banner .saint { font-size: 0.9em; color: var(--text); }
   </style>
 </head>
 <body>
   <header>
     <div class="container">
-      <a href="/" class="logo">
-        📖 BibliaOrtodoxă
-        <small>Căutare avansată</small>
-      </a>
+      <div style="display:flex;align-items:center;gap:15px;flex-wrap:wrap">
+        <a href="/" class="logo">
+          📖 BibliaOrtodoxă
+          <small>Căutare avansată</small>
+        </a>
+        <nav style="display:flex;gap:6px;font-size:0.85em">
+          <a href="/" class="nav-tab" data-spa>Biblie</a>
+          <a href="/calendar" class="nav-tab" data-spa>📅 Calendar</a>
+        </nav>
+      </div>
       <div class="search-box">
         <form id="searchForm" action="/search">
           <input type="text" id="searchInput" name="q" placeholder="Caută în Biblie... cuvinte, fraze, orice" autocomplete="off">
@@ -346,6 +429,7 @@
       <p style="margin-top: 5px">
         <a href="/">Toate cărțile</a> ·
         <a href="/salvate" data-spa>📚 Salvate</a> ·
+        <a href="/calendar" data-spa>📅 Calendar</a> ·
         <a href="/api/books">API</a> ·
         Sursă: <a href="https://www.bibliaortodoxa.ro" target="_blank">bibliaortodoxa.ro</a>
       </p>
@@ -378,6 +462,10 @@
 
       if (path === '/salvate') {
         return { page: 'saved' };
+      }
+
+      if (path === '/calendar') {
+        return { page: 'calendar' };
       }
 
       return { page: 'home' };
@@ -685,6 +773,12 @@
     // ─── Main Render ─────────────────────────────────────────
     async function render() {
       const route = getRoute();
+      // Update active nav tab
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+      const tabMap = { 'home': '/', 'chapter': '/', 'calendar': '/calendar' };
+      const activeTab = document.querySelector(`.nav-tab[href="${tabMap[route.page] || '/'}"]`);
+      if (activeTab) activeTab.classList.add('active');
+
       switch (route.page) {
         case 'home':
           await renderHome();
@@ -697,6 +791,9 @@
           break;
         case 'search':
           await renderSearch(route.q, route.carte, route.limit, route.offset);
+          break;
+        case 'calendar':
+          await renderCalendar();
           break;
         default:
           await renderHome();
@@ -942,6 +1039,170 @@
         await deleteSavedChapter(item.carte, item.capitol);
       }
       renderSaved();
+    }
+
+    // ─── Calendar ──────────────────────────────────────────────
+
+    const MONTH_NAMES = ['Ianuarie','Februarie','Martie','Aprilie','Mai','Iunie',
+                         'Iulie','August','Septembrie','Octombrie','Noiembrie','Decembrie'];
+    const DAY_NAMES = ['Lun','Mar','Mie','Joi','Vin','Sâm','Dum'];
+
+    async function renderCalendar() {
+      showLoader('Se încarcă calendarul...');
+
+      try {
+        const now = new Date();
+        const an = window._calAn || now.getFullYear();
+        const luna = window._calLuna || (now.getMonth() + 1);
+        const data = await api(`/api/calendar/${an}/${luna}`);
+        renderCalendarHTML(data);
+      } catch (err) {
+        showContent(`<div class="empty-state"><div class="icon">❌</div><p>Eroare: ${err.message}</p></div>`);
+      }
+    }
+
+    function renderCalendarHTML(data) {
+      const { an, luna, luna_nume, zile, astazi } = data;
+      const now = new Date();
+      const todayStr = `${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}`;
+
+      // First day of month (0=Sunday, adjust for Monday start)
+      const firstDay = new Date(an, luna - 1, 1);
+      let startOffset = (firstDay.getDay() + 6) % 7; // 0=Monday
+
+      // Days in month
+      const daysInMonth = new Date(an, luna, 0).getDate();
+
+      // Build day lookup
+      const dayMap = {};
+      zile.forEach(d => { dayMap[d.zi] = d; });
+
+      // Today's info summary
+      let todayHtml = '';
+      if (astazi && astazi.zi) {
+        const tipSf = astazi.tip === 'sarbatoare' ? '⭐ Sărbătoare' : '';
+        const postInfo = astazi.comentarii && astazi.comentarii.toLowerCase().includes('post') ? `🔴 ${astazi.comentarii}` : '';
+        todayHtml = `
+          <div class="cal-today-banner">
+            <div>
+              <div class="label">Astăzi, ${astazi.zi} ${luna_nume} ${an}</div>
+              <div class="saint">${escapeHtml(astazi.sfinti || '—')}</div>
+            </div>
+            <div style="text-align:right">
+              ${tipSf ? `<div class="value">${tipSf}</div>` : ''}
+              ${postInfo ? `<div class="fast-info" style="font-size:0.9em">${postInfo}</div>` : ''}
+            </div>
+          </div>
+        `;
+      }
+
+      // Navigation
+      let html = `
+        <div class="cal-nav">
+          <button onclick="changeMonth(${an}, ${luna}, -1)">◀</button>
+          <select id="calMonthSelect" onchange="changeCalendarMonth(this)">
+            ${MONTH_NAMES.map((m, i) => `<option value="${i+1}" ${i+1 === luna ? 'selected' : ''}>${m}</option>`).join('')}
+          </select>
+          <span class="cal-title">${luna_nume} ${an}</span>
+          <select id="calYearSelect" onchange="changeCalendarYear(this)">
+            ${Array.from({length: 13}, (_, i) => 2025 + i).map(y =>
+              `<option value="${y}" ${y === an ? 'selected' : ''}>${y}</option>`
+            ).join('')}
+          </select>
+          <button onclick="changeMonth(${an}, ${luna}, 1)">▶</button>
+        </div>
+        ${todayHtml}
+        <div class="cal-grid">
+          ${DAY_NAMES.map(d => `<div class="cal-header">${d}</div>`).join('')}
+          ${Array(startOffset).fill('<div class="cal-day empty"></div>').join('')}
+          ${Array.from({length: daysInMonth}, (_, i) => {
+            const zi = i + 1;
+            const info = dayMap[zi];
+            const isToday = `${an}-${luna}-${zi}` === todayStr;
+            const isSelected = zi === (window._calZi || (astazi && astazi.zi === (now.getDate()) && todayStr ? (now.getDate()) : null));
+            const tip = info ? info.tip : 'normal';
+            const isPost = info && info.comentarii && info.comentarii.toLowerCase().includes('post');
+            let cls = 'cal-day';
+            if (isToday) cls += ' today';
+            if (tip === 'sarbatoare') cls += ' sarbatoare';
+            if (isPost) cls += ' post';
+            const shortSaint = info && info.sfinti ? info.sfinti.substring(0, 30).replace(/\(†\)\s*|†\s*/g, '') : '';
+            return `<div class="${cls}" onclick="selectDay(${zi})" title="${escapeHtml(info ? (info.sfinti || '') : '')}">
+              <div class="day-num">${zi}</div>
+              ${shortSaint ? `<span class="day-name">${escapeHtml(shortSaint)}</span>` : ''}
+            </div>`;
+          }).join('')}
+        </div>
+      `;
+
+      // Selected day detail
+      const selZi = window._calZi || (astazi && astazi.zi === now.getDate() ? astazi.zi : 1);
+      if (dayMap[selZi]) {
+        html += renderDayDetail(dayMap[selZi], selZi, luna_nume, an);
+      } else if (zile.length > 0) {
+        html += renderDayDetail(zile[0], 1, luna_nume, an);
+      } else {
+        html += '<p style="color:var(--text-dim)">Nicio informație disponibilă.</p>';
+      }
+
+      // Legend
+      html += `
+        <div class="legend">
+          <span class="legend-item"><span class="dot" style="background:var(--gold)"></span> Sărbătoare / Duminică</span>
+          <span class="legend-item"><span class="dot" style="background:#c0392b"></span> Zi de post</span>
+          <span class="legend-item" style="padding-left:4px">Date preluate de pe noutati-ortodoxe.ro</span>
+        </div>
+      `;
+
+      showContent(html);
+    }
+
+    function renderDayDetail(info, zi, luna_nume, an) {
+      const tipText = info.tip === 'sarbatoare' ? '⭐ Sărbătoare' : info.tip === 'duminica' ? '✝ Duminică' : '—';
+      const hasPost = info.comentarii && info.comentarii.toLowerCase().includes('post');
+      const postClass = hasPost ? 'fast-info' : '';
+
+      let html = `<div class="cal-detail">
+        <h2>${zi} ${luna_nume} ${an} <span class="day-of-week">${info.zi_sapt || ''}</span></h2>
+        ${info.tip === 'sarbatoare' ? `<div class="feast">${tipText}</div>` : (info.tip === 'duminica' ? `<div class="sunday-info">${tipText}</div>` : '')}
+        <div class="saint-name">${escapeHtml(info.sfinti || '—')}</div>
+        ${info.comentarii ? `<div class="${postClass}">${escapeHtml(info.comentarii)}</div>` : ''}
+        ${info.duminica_titlu ? `<div class="sunday-info">${escapeHtml(info.duminica_titlu)}</div>` : ''}
+        ${info.duminica_subtitlu ? `<div class="sunday-gospel">${escapeHtml(info.duminica_subtitlu)}</div>` : ''}
+      </div>`;
+      return html;
+    }
+
+    // Calendar navigation helpers
+    function changeMonth(an, luna, dir) {
+      let newLuna = luna + dir;
+      let newAn = an;
+      if (newLuna < 1) { newLuna = 12; newAn--; }
+      if (newLuna > 12) { newLuna = 1; newAn++; }
+      if (newAn < 2025) newAn = 2025;
+      if (newAn > 2037) newAn = 2037;
+      window._calAn = newAn;
+      window._calLuna = newLuna;
+      window._calZi = null;
+      renderCalendar();
+    }
+
+    function changeCalendarMonth(sel) {
+      window._calLuna = parseInt(sel.value);
+      window._calZi = null;
+      renderCalendar();
+    }
+
+    function changeCalendarYear(sel) {
+      window._calAn = parseInt(sel.value);
+      window._calZi = null;
+      renderCalendar();
+    }
+
+    function selectDay(zi) {
+      window._calZi = zi;
+      // Re-render just the detail and highlight — simpler: full re-render
+      renderCalendar();
     }
 
     // ─── Initial Render ──────────────────────────────────────
