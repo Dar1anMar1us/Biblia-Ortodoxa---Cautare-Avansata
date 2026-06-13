@@ -1107,7 +1107,7 @@
         let extraInfo = '';
         if (astazi.comentarii) {
           const isPost = astazi.comentarii.toLowerCase().includes('post');
-          extraInfo = isPost ? `🔴 ${escapeHtml(astazi.comentarii)}` : `📌 ${escapeHtml(astazi.comentarii)}`;
+          extraInfo = isPost ? `🔴 ${escapeHtml(astazi.comentarii)}` : `${iconForComment(astazi.comentarii)} ${escapeHtml(astazi.comentarii)}`;
         }
         todayHtml = `
           <div class="cal-today-banner">
@@ -1192,11 +1192,27 @@
         <h2>${zi} ${luna_nume} ${an} <span class="day-of-week">${info.zi_sapt || ''}</span></h2>
         <div class="saint-name">${escapeHtml(info.sfinti || '—')}</div>
         ${tipText ? `<div class="feast">${tipText}</div>` : ''}
-        ${info.comentarii ? `<div class="fast-info">${escapeHtml(info.comentarii)}</div>` : ''}
+        ${info.comentarii ? `<div class="fast-info">${iconForComment(info.comentarii)} ${escapeHtml(info.comentarii)}</div>` : ''}
         ${info.duminica_titlu ? `<div class="sunday-info">${escapeHtml(info.duminica_titlu)}</div>` : ''}
         ${info.duminica_subtitlu ? `<div class="sunday-gospel">${escapeHtml(info.duminica_subtitlu)}</div>` : ''}
       </div>`;
       return html;
+    }
+
+    function iconForComment(text) {
+      const t = text.toLowerCase();
+      if (t.includes('post negru')) return '⬛';
+      if (t.includes('dezlegare la pește') || t.includes('dezlegare la peşte')) return '🐟';
+      if (t.includes('dezlegare la ulei') || t.includes('dezlegare la vin')) return '🍷';
+      if (t.includes('dezlegare la brânză') || t.includes('dezlegare la brânza') || t.includes('lapte') || t.includes('ouă')) return '🧀';
+      if (t.includes('post')) return '🥬';
+      if (t.includes('harți') || t.includes('harti')) return '🍃';
+      if (t.includes('tedeum')) return '🙏';
+      if (t.includes('lăsatul') || t.includes('lasatul')) return '🥩';
+      if (t.includes('aliturgic')) return '⛪';
+      if (t.includes('începutul') || t.includes('începutul')) return '📅';
+      if (t.includes('dezlegare')) return '🍽️';
+      return '📌';
     }
 
     // Calendar navigation helpers
