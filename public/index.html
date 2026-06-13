@@ -341,7 +341,6 @@
     .cal-nav .nav-group {
       display: flex; align-items: center; gap: 4px;
     }
-    .cal-title { font-size: 1.1em; color: var(--gold); text-align: center; min-width: 140px; }
 
     .cal-grid {
       display: grid;
@@ -412,7 +411,6 @@
     @media (max-width: 600px) {
       .cal-nav { gap: 6px; }
       .cal-nav button, .cal-nav select { padding: 5px 7px; font-size: 0.85em; }
-      .cal-title { font-size: 0.95em; min-width: 100px; }
       .cal-grid { gap: 2px; }
       .cal-day { padding: 5px 2px; font-size: 0.75em; }
       .cal-day .day-num { font-size: 0.9em; }
@@ -1135,7 +1133,6 @@
               ${MONTH_NAMES.map((m, i) => `<option value="${i+1}" ${i+1 === luna ? 'selected' : ''}>${m}</option>`).join('')}
             </select>
           </div>
-          <span class="cal-title">${luna_nume} ${an}</span>
           <div class="nav-group">
             <select id="calYearSelect" onchange="changeCalendarYear(this)">
               ${Array.from({length: 13}, (_, i) => 2025 + i).map(y =>
