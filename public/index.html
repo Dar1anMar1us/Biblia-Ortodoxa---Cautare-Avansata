@@ -380,6 +380,7 @@
     .cal-detail h2 { color: var(--gold); font-size: 1.2em; margin-bottom: 8px; }
     .cal-detail .day-of-week { color: var(--text-dim); font-size: 0.9em; }
     .cal-detail .saint-name { font-size: 1.1em; margin: 10px 0; line-height: 1.6; }
+    .cal-detail .saint-name a:hover { border-bottom-color: var(--gold) !important; color: var(--gold) !important; }
     .cal-detail .fast-info { color: #e57373; font-size: 0.9em; margin: 6px 0; }
     .cal-detail .sunday-info { color: var(--gold-light); font-size: 0.9em; margin: 6px 0; font-style: italic; }
     .cal-detail .sunday-gospel { color: var(--text-dim); font-size: 0.85em; margin: 4px 0; }
@@ -1193,16 +1194,27 @@
 
     function renderDayDetail(info, zi, luna_nume, an) {
       const tipText = info.tip === 'sarbatoare' ? '⭐ Sărbătoare' : info.tip === 'duminica' ? '✝ Duminică' : '';
+      const saintUrl = info.sfinti ? sinaxarUrl(an, luna_nume, zi) : '';
 
       let html = `<div class="cal-detail">
         <h2>${zi} ${luna_nume} ${an} <span class="day-of-week">${info.zi_sapt || ''}</span></h2>
-        <div class="saint-name">${escapeHtml(info.sfinti || '—')}</div>
+        <div class="saint-name">${saintUrl ? `<a href="${saintUrl}" target="_blank" rel="noopener" style="color:var(--text);text-decoration:none;border-bottom:1px dotted rgba(255,255,255,0.2)">${escapeHtml(info.sfinti || '—')}</a>` : escapeHtml(info.sfinti || '—')}</div>
         ${tipText ? `<div class="feast">${tipText}</div>` : ''}
         ${info.comentarii ? `<div class="fast-info">${iconForComment(info.comentarii)} ${escapeHtml(info.comentarii)}</div>` : ''}
         ${info.duminica_titlu ? `<div class="sunday-info">${escapeHtml(info.duminica_titlu)}</div>` : ''}
         ${info.duminica_subtitlu ? `<div class="sunday-gospel">${escapeHtml(info.duminica_subtitlu)}</div>` : ''}
       </div>`;
       return html;
+    }
+
+    function sinaxarUrl(an, luna_nume, zi) {
+      // luna_nume is "ianuarie", "februarie", etc. — but we need month index (1-12)
+      const luni = ['ianuarie','februarie','martie','aprilie','mai','iunie',
+                    'iulie','august','septembrie','octombrie','noiembrie','decembrie'];
+      const lunaIdx = luni.indexOf(luna_nume.toLowerCase()) + 1;
+      if (!lunaIdx) return '';
+      const ts = Math.floor(new Date(Date.UTC(an, lunaIdx - 1, zi)).getTime() / 1000);
+      return `https://www.noutati-ortodoxe.ro/calendar-ortodox/sinaxar.php?date=${ts}`;
     }
 
     function iconForComment(text) {
