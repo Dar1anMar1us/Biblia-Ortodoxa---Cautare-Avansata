@@ -1090,6 +1090,7 @@
         const an = window._calAn || now.getFullYear();
         const luna = window._calLuna || (now.getMonth() + 1);
         const data = await api(`/api/calendar/${an}/${luna}`);
+        window._calData = data; // cache for quick day switching
         renderCalendarHTML(data);
       } catch (err) {
         showContent(`<div class="empty-state"><div class="icon">❌</div><p>Eroare: ${err.message}</p></div>`);
@@ -1181,11 +1182,11 @@
       // Selected day detail
       const selZi = window._calZi || (astazi && astazi.zi === now.getDate() ? astazi.zi : 1);
       if (dayMap[selZi]) {
-        html += renderDayDetail(dayMap[selZi], selZi, luna_nume, an);
+        html += `<div id="calDetail">${renderDayDetail(dayMap[selZi], selZi, luna_nume, an)}</div>`;
       } else if (zile.length > 0) {
-        html += renderDayDetail(zile[0], 1, luna_nume, an);
+        html += `<div id="calDetail">${renderDayDetail(zile[0], 1, luna_nume, an)}</div>`;
       } else {
-        html += '<p style="color:var(--text-dim)">Nicio informație disponibilă.</p>';
+        html += '<div id="calDetail"><p style="color:var(--text-dim)">Nicio informație disponibilă.</p></div>';
       }
 
       // Legend
@@ -1243,8 +1244,21 @@
 
     function selectDay(zi) {
       window._calZi = zi;
-      // Re-render just the detail and highlight — simpler: full re-render
-      renderCalendar();
+      // No API call — just update selected highlight + detail card from cache
+      document.querySelectorAll('.cal-day').forEach(el => {
+        const num = parseInt(el.querySelector('.day-num')?.textContent);
+        if (num === zi) el.classList.add('selected');
+        else el.classList.remove('selected');
+      });
+      // Update detail card
+      const data = window._calData;
+      if (!data) return;
+      const info = data.zile.find(d => d.zi === zi);
+      if (!info) return;
+      const detailEl = document.getElementById('calDetail');
+      if (detailEl) {
+        detailEl.innerHTML = renderDayDetail(info, zi, data.luna_nume, data.an);
+      }
     }
 
     // ─── Initial Render ──────────────────────────────────────
