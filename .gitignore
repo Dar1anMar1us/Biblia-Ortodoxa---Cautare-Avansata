@@ -155,6 +155,10 @@ cypress/videos/
 # Screenshots
 public/screenshot.png
 
+# Python cache
+__pycache__/
+scripts/__pycache__/
+
 # OS
 .DS_Store
 Thumbs.db
