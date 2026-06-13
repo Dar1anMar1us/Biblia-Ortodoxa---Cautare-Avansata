@@ -442,6 +442,20 @@ app.get('/api/calendar/:an/:luna', (req, res) => {
   });
 });
 
+// ─── GET /api/sinaxar/:an/:luna/:zi ───────────────────────────
+app.get('/api/sinaxar/:an/:luna/:zi', (req, res) => {
+  const db = getDb();
+  const { an, luna, zi } = req.params;
+
+  const row = db.prepare(`
+    SELECT titlu, text, img_local, img_original
+    FROM sinaxar WHERE an = ? AND luna = ? AND zi = ?
+  `).get(parseInt(an), parseInt(luna), parseInt(zi));
+
+  if (!row) return res.json({ found: false });
+  res.json({ found: true, ...row });
+});
+
 // ─── Serve static files (public/) ──────────────────────────
 app.use(express.static(path.join(__dirname, 'public')));
 

@@ -386,6 +386,32 @@
     .cal-detail .sunday-gospel { color: var(--text-dim); font-size: 0.85em; margin: 4px 0; }
     .cal-detail .feast { color: var(--gold); font-weight: bold; }
 
+    /* Sinaxar card */
+    .sinaxar-btn {
+      background: var(--card-bg); color: var(--gold); border: 1px solid #333;
+      border-radius: 4px; padding: 6px 14px; margin-top: 12px;
+      cursor: pointer; font-size: 0.85em; font-family: inherit;
+      transition: 0.2s;
+    }
+    .sinaxar-btn:hover { border-color: var(--gold); background: #252545; }
+    .sinaxar-btn:disabled { opacity: 0.5; cursor: default; }
+    .sinaxar-card {
+      margin-top: 14px; padding: 14px; background: rgba(0,0,0,0.2);
+      border-radius: 6px; border: 1px solid #2a2a3e;
+      max-height: 400px; overflow-y: auto;
+    }
+    .sinaxar-card::-webkit-scrollbar { width: 6px; }
+    .sinaxar-card::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+    .sinaxar-img {
+      float: right; max-width: 120px; height: auto;
+      margin: 0 0 10px 14px; border-radius: 4px;
+      border: 1px solid #333;
+    }
+    .sinaxar-text {
+      font-size: 0.88em; line-height: 1.7; color: var(--text);
+      text-align: justify;
+    }
+
     .cal-legend-item .dot {
       width: 8px; height: 8px; border-radius: 50%; display: inline-block;
     }
@@ -1194,27 +1220,59 @@
 
     function renderDayDetail(info, zi, luna_nume, an) {
       const tipText = info.tip === 'sarbatoare' ? '⭐ Sărbătoare' : info.tip === 'duminica' ? '✝ Duminică' : '';
-      const saintUrl = info.sfinti ? sinaxarUrl(an, luna_nume, zi) : '';
+      const sinaxarBtn = `<button class="sinaxar-btn" onclick="loadSinaxar(${an}, ${zi}, '${luna_nume}')" id="sinaxarBtn">📖 Viața sfântului</button>`;
 
       let html = `<div class="cal-detail">
         <h2>${zi} ${luna_nume} ${an} <span class="day-of-week">${info.zi_sapt || ''}</span></h2>
-        <div class="saint-name">${saintUrl ? `<a href="${saintUrl}" target="_blank" rel="noopener" style="color:var(--text);text-decoration:none;border-bottom:1px dotted rgba(255,255,255,0.2)">${escapeHtml(info.sfinti || '—')}</a>` : escapeHtml(info.sfinti || '—')}</div>
+        <div class="saint-name">${escapeHtml(info.sfinti || '—')}</div>
         ${tipText ? `<div class="feast">${tipText}</div>` : ''}
         ${info.comentarii ? `<div class="fast-info">${iconForComment(info.comentarii)} ${escapeHtml(info.comentarii)}</div>` : ''}
         ${info.duminica_titlu ? `<div class="sunday-info">${escapeHtml(info.duminica_titlu)}</div>` : ''}
         ${info.duminica_subtitlu ? `<div class="sunday-gospel">${escapeHtml(info.duminica_subtitlu)}</div>` : ''}
+        <div id="sinaxarContainer"></div>
+        ${sinaxarBtn}
       </div>`;
       return html;
     }
 
-    function sinaxarUrl(an, luna_nume, zi) {
-      // luna_nume is "ianuarie", "februarie", etc. — but we need month index (1-12)
+    async function loadSinaxar(an, zi, luna_nume) {
       const luni = ['ianuarie','februarie','martie','aprilie','mai','iunie',
                     'iulie','august','septembrie','octombrie','noiembrie','decembrie'];
-      const lunaIdx = luni.indexOf(luna_nume.toLowerCase()) + 1;
-      if (!lunaIdx) return '';
-      const ts = Math.floor(new Date(Date.UTC(an, lunaIdx - 1, zi)).getTime() / 1000);
-      return `https://www.noutati-ortodoxe.ro/calendar-ortodox/sinaxar.php?date=${ts}`;
+      const luna = luni.indexOf(luna_nume.toLowerCase()) + 1;
+      if (!luna) return;
+
+      const btn = document.getElementById('sinaxarBtn');
+      const container = document.getElementById('sinaxarContainer');
+      if (!container) return;
+
+      btn.disabled = true;
+      btn.textContent = '⏳ Se încarcă...';
+
+      try {
+        const data = await api(`/api/sinaxar/${an}/${luna}/${zi}`);
+        if (data.found && data.text) {
+          container.innerHTML = `
+            <div class="sinaxar-card">
+              ${data.img_local ? `<img src="${data.img_local}" alt="${escapeHtml(data.titlu || '')}" class="sinaxar-img" loading="lazy">` : ''}
+              <div class="sinaxar-text">${escapeHtml(data.text)}</div>
+            </div>
+          `;
+          btn.textContent = '📖 Ascunde viața';
+          btn.onclick = () => {
+            container.innerHTML = '';
+            btn.textContent = '📖 Viața sfântului';
+            btn.onclick = () => loadSinaxar(an, zi, luna_nume);
+            btn.disabled = false;
+          };
+        } else {
+          container.innerHTML = '<p style="color:var(--text-dim);font-size:0.85em;margin-top:8px">Viața sfântului nu este disponibilă momentan.</p>';
+          btn.textContent = '📖 Viața sfântului';
+        }
+      } catch(e) {
+        container.innerHTML = '<p style="color:var(--text-dim);font-size:0.85em;margin-top:8px">Eroare la încărcare.</p>';
+        btn.textContent = '📖 Viața sfântului';
+      }
+      btn.disabled = false;
     }
 
     function iconForComment(text) {
