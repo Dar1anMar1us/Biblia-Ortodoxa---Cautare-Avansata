@@ -385,29 +385,16 @@
     .cal-detail .sunday-gospel { color: var(--text-dim); font-size: 0.85em; margin: 4px 0; }
     .cal-detail .feast { color: var(--gold); font-weight: bold; }
 
-    /* Calendar footer */
-    .cal-footer {
-      margin-top: 20px; padding: 16px 0 4px;
-      border-top: 1px solid #2a2a3e;
-      display: flex; flex-wrap: wrap; align-items: center;
-      justify-content: center; gap: 18px;
-    }
-    .cal-legend {
-      display: flex; gap: 18px; flex-wrap: wrap; font-size: 0.8em;
-    }
-    .cal-legend-item {
-      display: flex; align-items: center; gap: 6px; color: var(--text-dim);
-    }
     .cal-legend-item .dot {
       width: 8px; height: 8px; border-radius: 50%; display: inline-block;
     }
+    .cal-legend { display: flex; gap: 18px; flex-wrap: wrap; font-size: 0.8em; }
+    .cal-legend-item { display: flex; align-items: center; gap: 6px; color: var(--text-dim); }
 
     .cal-today-banner {
       background: rgba(201,168,76,0.08);
       border: 1px solid var(--gold);
       border-radius: 6px; padding: 12px 18px; margin-bottom: 20px;
-      display: flex; justify-content: space-between; align-items: center;
-      flex-wrap: wrap; gap: 8px;
     }
     .cal-today-banner .label { color: var(--text-dim); font-size: 0.85em; }
     .cal-today-banner .value { color: var(--gold); font-size: 1em; }
@@ -1124,13 +1111,19 @@
         }
         todayHtml = `
           <div class="cal-today-banner">
-            <div>
-              <div class="label">Astăzi, ${astazi.zi} ${luna_nume} ${an}</div>
-              <div class="saint">${escapeHtml(astazi.sfinti || '—')}</div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;width:100%">
+              <div>
+                <div class="label">Astăzi, ${astazi.zi} ${luna_nume} ${an}</div>
+                <div class="saint">${escapeHtml(astazi.sfinti || '—')}</div>
+              </div>
+              <div style="text-align:right">
+                ${tipSf ? `<div class="value">${tipSf}</div>` : ''}
+                ${extraInfo ? `<div style="font-size:0.85em;margin-top:4px">${extraInfo}</div>` : ''}
+              </div>
             </div>
-            <div style="text-align:right">
-              ${tipSf ? `<div class="value">${tipSf}</div>` : ''}
-              ${extraInfo ? `<div style="font-size:0.85em;margin-top:4px">${extraInfo}</div>` : ''}
+            <div class="cal-legend" style="margin-top:10px;padding-top:8px;border-top:1px solid rgba(201,168,76,0.2)">
+              <span class="cal-legend-item"><span class="dot" style="background:var(--gold)"></span> Sărbătoare</span>
+              <span class="cal-legend-item"><span class="dot" style="background:#c0392b"></span> Post</span>
             </div>
           </div>
         `;
@@ -1188,16 +1181,6 @@
       } else {
         html += '<div id="calDetail"><p style="color:var(--text-dim)">Nicio informație disponibilă.</p></div>';
       }
-
-      // Legend
-      html += `
-        <div class="cal-footer">
-          <div class="cal-legend">
-            <span class="cal-legend-item"><span class="dot" style="background:var(--gold)"></span> Sărbătoare</span>
-            <span class="cal-legend-item"><span class="dot" style="background:#c0392b"></span> Post</span>
-          </div>
-        </div>
-      `;
 
       showContent(html);
     }
