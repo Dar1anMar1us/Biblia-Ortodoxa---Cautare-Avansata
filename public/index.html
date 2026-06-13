@@ -1117,7 +1117,8 @@
           extraInfo = isPost ? `🔴 ${escapeHtml(astazi.comentarii)}` : `${iconForComment(astazi.comentarii)} ${escapeHtml(astazi.comentarii)}`;
         }
         todayHtml = `
-          <div class="cal-today-banner">
+          <div class="cal-today-banner" style="position:relative">
+            <span class="cal-pin">📌</span>
             <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;width:100%">
               <div>
                 <div class="label">Astăzi, ${astazi.zi} ${luna_nume} ${an}</div>
@@ -1138,8 +1139,7 @@
 
       // Navigation
       let html = `
-        <div class="cal-nav" style="position:relative">
-          <span class="cal-pin">📌</span>
+        <div class="cal-nav">
           <div class="nav-group">
             <button onclick="changeMonth(${an}, ${luna}, -1)">◀</button>
             <select id="calMonthSelect" onchange="changeCalendarMonth(this)">
