@@ -13,6 +13,9 @@
   <meta name="language" content="Romanian">
   <meta name="author" content="Darian Marius Chircă">
 
+  <!-- Umami Analytics -->
+  <script defer src="https://umami.bibliaortodoxa.org/script.js" data-website-id="13a24e9f-c944-4051-b927-ee4d7fe1d82d"></script>
+
   <!-- Theme Color -->
   <meta name="theme-color" content="#1a1a2e">
 
@@ -769,7 +772,7 @@
       showLoader('Se caută...');
 
       try {
-        const params = new URLSearchParams({ q, limit: limit || 20, offset: offset || 0 });
+        const params = new URLSearchParams({ q, limit: limit || 50, offset: offset || 0 });
         if (carte) params.set('carte', carte);
         const data = await api(`/api/search?${params}`);
 
@@ -859,15 +862,45 @@
       return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
+    const DIACRITICS_MAP = {
+      'a': '[aăâ]', 'ă': '[aăâ]', 'â': '[aăâ]',
+      'i': '[iî]', 'î': '[iî]',
+      's': '[sşș]', 'ş': '[sşș]', 'ș': '[sşș]',
+      't': '[tţț]', 'ţ': '[tţț]', 'ț': '[tţț]',
+      'A': '[AĂÂ]', 'Ă': '[AĂÂ]', 'Â': '[AĂÂ]',
+      'I': '[IÎ]', 'Î': '[IÎ]',
+      'S': '[SŞȘ]', 'Ş': '[SŞȘ]', 'Ș': '[SŞȘ]',
+      'T': '[TŢȚ]', 'Ţ': '[TŢȚ]', 'Ț': '[TŢȚ]'
+    };
+    function diacriticPattern(s) {
+      return s.replace(/[ăâîșțĂÂÎȘȚaAiIsStTşŞţŢ]/g, c => DIACRITICS_MAP[c] || c);
+    }
+
     function highlightText(text, query) {
       if (!query || !text) return escapeHtml(text);
-      const words = query.split(/\s+/).filter(w => w.length > 2);
-      if (words.length === 0) return escapeHtml(text);
       let result = escapeHtml(text);
+      const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+      // 1) Multi-word queries: highlight the exact phrase first
+      if (query.includes(' ')) {
+        try {
+          const phraseRe = new RegExp('(' + diacriticPattern(escapedQuery) + ')', 'gi');
+          phraseRe.lastIndex = 0;
+          if (phraseRe.test(result)) {
+            return result.replace(phraseRe, '<mark>$1</mark>');
+          }
+        } catch(_) {}
+      }
+
+      // 2) Fallback: highlight individual words (min 2 chars)
+      const words = query.split(/\s+/).filter(w => w.length > 1);
+      if (words.length === 0) return result;
       for (const word of words) {
         const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const regex = new RegExp('(' + escaped + ')', 'gi');
-        result = result.replace(regex, '<mark>$1</mark>');
+        try {
+          const re = new RegExp('(' + diacriticPattern(escaped) + ')', 'gi');
+          result = result.replace(re, '<mark>$1</mark>');
+        } catch(_) {}
       }
       return result;
     }
@@ -1156,7 +1189,7 @@
         const now = new Date();
         const an = window._calAn || now.getFullYear();
         const luna = window._calLuna || (now.getMonth() + 1);
-        const data = await api(`/api/calendar/${an}/${luna}`);
+        const data = await api(`/api/calendar/${an}/${luna}?azi=${now.getDate()}`);
         window._calData = data; // cache for quick day switching
         renderCalendarHTML(data);
       } catch (err) {
@@ -1234,7 +1267,7 @@
             const zi = i + 1;
             const info = dayMap[zi];
             const isToday = `${an}-${luna}-${zi}` === todayStr;
-            const isSelected = zi === (window._calZi || (astazi && astazi.zi === (now.getDate()) && todayStr ? (now.getDate()) : null));
+            const isSelected = zi === (window._calZi || (astazi ? astazi.zi : null));
             const tip = info ? info.tip : 'normal';
             const isPost = info && info.comentarii && info.comentarii.toLowerCase().includes('post');
             let cls = 'cal-day';
@@ -1252,7 +1285,7 @@
       `;
 
       // Selected day detail
-      const selZi = window._calZi || (astazi && astazi.zi === now.getDate() ? astazi.zi : 1);
+      const selZi = window._calZi || (astazi ? astazi.zi : 1);
       if (dayMap[selZi]) {
         html += `<div id="calDetail">${renderDayDetail(dayMap[selZi], selZi, luna_nume, an)}</div>`;
       } else if (zile.length > 0) {
@@ -1311,7 +1344,7 @@
               <div class="sinaxar-text">${escapeHtml(data.text)}</div>
             </div>
           `;
-          btn.textContent = '📖 Ascunde viața';
+          btn.textContent = '📖 Închide';
           btn.onclick = () => {
             container.innerHTML = '';
             btn.textContent = '📖 Viața sfântului';
