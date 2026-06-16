@@ -30,11 +30,10 @@ function buildFtsQuery(input) {
     return input.trim();
   }
 
-  // Simple case: split into tokens, join with AND
+  // Simple case: single word → exact, multiple words → phrase
   const tokens = input.trim().split(/\s+/).filter(t => t.length > 0);
   if (tokens.length === 0) return null;
-  if (tokens.length === 1) return `"${tokens[0]}"`;
-  return tokens.map(t => `"${t}"`).join(' AND ');
+  return `"${tokens.join(' ')}"`;
 }
 
 // ─── GET /api/books ──────────────────────────────────────────
@@ -207,7 +206,7 @@ app.get('/api/books/:bookId/chapters/:chapter', (req, res) => {
 // ─── GET /api/search ─────────────────────────────────────────
 app.get('/api/search', (req, res) => {
   const db = getDb();
-  const { q, carte, capitol, limit = 20, offset = 0 } = req.query;
+  const { q, carte, capitol, limit = 50, offset = 0 } = req.query;
 
   if (!q || !q.trim()) {
     return res.status(400).json({ error: 'Query parameter "q" is required' });
@@ -420,11 +419,15 @@ app.get('/api/calendar/:an/:luna', (req, res) => {
     ORDER BY zi
   `).all(an, luna);
 
-  // Get today's info
+  // Get today's info — use client's date if provided, else server UTC
+  const clientZi = req.query.azi ? parseInt(req.query.azi) : null;
+  const todayAn = clientZi ? an : now.getFullYear();
+  const todayLuna = clientZi ? luna : (now.getMonth() + 1);
+  const todayZi = clientZi || now.getDate();
   const today = db.prepare(`
     SELECT zi, zi_sapt, sfinti, tip, comentarii
     FROM calendar WHERE an = ? AND luna = ? AND zi = ?
-  `).get(now.getFullYear(), now.getMonth() + 1, now.getDate());
+  `).get(todayAn, todayLuna, todayZi);
 
   // Determine post info for the month — extract unique fasting rules
   const postDays = days.filter(d => d.comentarii && (
@@ -472,18 +475,28 @@ app.get('/api/sinaxar/search', (req, res) => {
   const q = (req.query.q || '').trim();
   if (!q || q.length < 2) return res.json([]);
 
-  // Search in calendar.sfinti (saint names per day)
-  // Group by (luna, zi) since saints repeat yearly
-  const rows = db.prepare(`
+  // Normalize query: remove diacritics for ș/ț/ă/â/î matching
+  const normQ = q.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  // Load all saints rows (366 unique luna+zi pairs — tiny dataset)
+  // Filter in JS for word-boundary + diacritics-insensitive matching
+  const allRows = db.prepare(`
     SELECT luna, zi, sfinti
     FROM calendar
-    WHERE sfinti LIKE ? AND sfinti != ''
+    WHERE sfinti IS NOT NULL AND sfinti != ''
     GROUP BY luna, zi
     ORDER BY luna, zi
-    LIMIT 20
-  `).all(`%${q}%`);
+  `).all();
 
-  res.json(rows.map(r => ({ luna: r.luna, zi: r.zi, sfant: r.sfinti })));
+  const escapedQ = normQ.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const wordBoundary = new RegExp(`(?:^|[^\\p{L}])${escapedQ}(?:$|[^\\p{L}])`, 'iu');
+
+  const filtered = allRows.filter(r => {
+    const normText = r.sfinti.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    return wordBoundary.test(normText);
+  }).slice(0, 20);
+
+  res.json(filtered.map(r => ({ luna: r.luna, zi: r.zi, sfant: r.sfinti })));
 });
 
 // ─── Serve static files (public/) ──────────────────────────
