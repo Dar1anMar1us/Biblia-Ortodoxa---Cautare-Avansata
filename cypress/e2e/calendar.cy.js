@@ -155,12 +155,12 @@ describe('🧪 Calendar Ortodox — Test Plan', () => {
       cy.get('.sinaxar-img').should('be.visible');
     });
 
-    it('butonul toggle între "Viața" și "Ascunde"', () => {
+    it('butonul toggle între "Viața" și "Închide"', () => {
       cy.get('#calYearSelect').select('2026');
       cy.get('#calMonthSelect').select('Iunie');
       cy.get('.cal-day').not('.empty').first().click();
       cy.get('.sinaxar-btn').click();
-      cy.get('.sinaxar-btn').should('contain.text', 'Ascunde');
+      cy.get('.sinaxar-btn').should('contain.text', 'Închide');
       cy.get('.sinaxar-btn').click();
       cy.get('.sinaxar-btn').should('contain.text', 'Viața sfântului');
     });
