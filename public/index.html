@@ -789,6 +789,7 @@
           `);
           // Update search input
           document.getElementById('searchInput').value = q;
+          window._lastSearchQuery = q;
           return;
         }
 
@@ -852,6 +853,7 @@
 
         showContent(html);
         document.getElementById('searchInput').value = q;
+        window._lastSearchQuery = q;
       } catch (err) {
         showContent(`<div class="empty-state"><div class="icon">❌</div><p>Eroare: ${err.message}</p></div>`);
       }
@@ -905,6 +907,9 @@
       return result;
     }
 
+    // Track previous route for search-input persistence logic
+    let _prevRoute = null;
+
     // ─── Main Render ─────────────────────────────────────────
     async function render() {
       const route = getRoute();
@@ -913,6 +918,19 @@
       const tabMap = { 'home': '/', 'chapter': '/', 'calendar': '/calendar' };
       const activeTab = document.querySelector(`.nav-tab[href="${tabMap[route.page] || '/'}"]`);
       if (activeTab) activeTab.classList.add('active');
+
+      // Search input: keep query when coming from a keyword search,
+      // clear it when navigating directly (dropdown, book card, home, etc.)
+      if (route.page !== 'search') {
+        const input = document.getElementById('searchInput');
+        if (_prevRoute === 'search' && window._lastSearchQuery) {
+          // Came from a keyword search — preserve the query for tweaking
+          input.value = window._lastSearchQuery;
+        } else {
+          // Direct navigation — clear it
+          input.value = '';
+        }
+      }
 
       switch (route.page) {
         case 'home':
@@ -933,6 +951,8 @@
         default:
           await renderHome();
       }
+
+      _prevRoute = route.page;
     }
 
     // ─── Search Form ─────────────────────────────────────────
