@@ -25,13 +25,27 @@ function getDb() {
 function buildFtsQuery(input) {
   if (!input || !input.trim()) return null;
 
-  // If already has FTS operators, use as-is
-  if (/[()*"]/.test(input) || /\b(AND|OR|NOT)\b/i.test(input)) {
-    return input.trim();
+  const trimmed = input.trim();
+
+  // If already has explicit FTS syntax (quotes, parens, asterisks), trust it
+  if (/["()*]/.test(trimmed)) {
+    return trimmed;
+  }
+
+  // If has AND/OR/NOT operators, wrap each sub-expression in quotes
+  // so multi-word segments become phrase matches instead of individual tokens
+  if (/\b(AND|OR|NOT)\b/i.test(trimmed)) {
+    const parts = trimmed.split(/\b(AND|OR|NOT)\b/i);
+    return parts.map(part => {
+      const p = part.trim();
+      if (!p) return '';
+      if (/^(AND|OR|NOT)$/i.test(p)) return p.toUpperCase();
+      return `"${p}"`;
+    }).join(' ');
   }
 
   // Simple case: single word → exact, multiple words → phrase
-  const tokens = input.trim().split(/\s+/).filter(t => t.length > 0);
+  const tokens = trimmed.split(/\s+/).filter(t => t.length > 0);
   if (tokens.length === 0) return null;
   return `"${tokens.join(' ')}"`;
 }
