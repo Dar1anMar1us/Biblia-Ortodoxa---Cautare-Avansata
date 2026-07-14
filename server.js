@@ -542,10 +542,25 @@ function requireAnalyticsAuth(req, res, next) {
 
 // Login
 app.post('/api/analytics/login', (req, res) => {
+  const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+             req.ip || req.socket?.remoteAddress || 'unknown';
+
+  const rateCheck = analytics.checkRateLimit(ip);
+  if (!rateCheck.allowed) {
+    const waitMin = Math.ceil(rateCheck.resetIn / 60);
+    return res.status(429).json({
+      error: `Prea multe încercări. Încearcă din nou în ${waitMin} minut(e).`,
+      retryAfter: rateCheck.resetIn
+    });
+  }
+
   const { password } = req.body || {};
   if (password !== ANALYTICS_PASSWORD) {
     return res.status(401).json({ error: 'Invalid password' });
   }
+
+  // Success — reset counter
+  analytics.resetRateLimit(ip);
   const sid = analytics.createSession();
   res.json({ success: true, token: sid });
 });

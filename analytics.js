@@ -4,9 +4,43 @@ const crypto = require('crypto');
 
 // ─── Config ─────────────────────────────────────────────────
 const ANALYTICS_PATH = path.join(__dirname, 'analytics.db');
-const GEO_CACHE_MAX = 500;       // don't re-lookup same IP too often
-const GEO_BATCH_SIZE = 10;        // ips batched between responses
+const GEO_CACHE_MAX = 500;
+const GEO_BATCH_SIZE = 10;
 const SESSION_SECRET = process.env.ANALYTICS_SECRET || 'schimba-ma-in-prod';
+
+// ─── Rate limiter (in-memory, per IP) ─────────────────────
+const loginAttempts = new Map();
+const RATE_MAX = 8;            // max attempts before lockout
+const RATE_WINDOW = 15 * 60 * 1000; // 15 minutes window (resets after)
+
+function checkRateLimit(ip) {
+  const now = Date.now();
+  const entry = loginAttempts.get(ip);
+
+  if (!entry) {
+    loginAttempts.set(ip, { count: 1, first: now });
+    return { allowed: true, remaining: RATE_MAX - 1 };
+  }
+
+  // Window expired? Reset
+  if (now - entry.first > RATE_WINDOW) {
+    loginAttempts.set(ip, { count: 1, first: now });
+    return { allowed: true, remaining: RATE_MAX - 1 };
+  }
+
+  entry.count++;
+
+  if (entry.count > RATE_MAX) {
+    const resetIn = Math.ceil((RATE_WINDOW - (now - entry.first)) / 1000);
+    return { allowed: false, remaining: 0, resetIn };
+  }
+
+  return { allowed: true, remaining: RATE_MAX - entry.count };
+}
+
+function resetRateLimit(ip) {
+  loginAttempts.delete(ip);
+}
 
 // ─── DB init ────────────────────────────────────────────────
 let _db;
@@ -196,5 +230,7 @@ module.exports = {
   getStats,
   createSession,
   validateSession,
-  deleteSession
+  deleteSession,
+  checkRateLimit,
+  resetRateLimit
 };
