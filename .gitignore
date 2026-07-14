@@ -148,6 +148,11 @@ bible.db-shm
 bible.db-wal
 biblia.db
 
+# Analytics database (auto-generated)
+analytics.db
+analytics.db-shm
+analytics.db-wal
+
 # Cypress artifacts
 cypress/screenshots/
 cypress/videos/

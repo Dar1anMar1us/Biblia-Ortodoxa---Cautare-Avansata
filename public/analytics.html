@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analytics — Bible API</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; }
+
+/* Login */
+#login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+.login-box { background: #1e293b; padding: 2.5rem; border-radius: 16px; width: 360px; box-shadow: 0 25px 50px -12px rgba(0,0,0,.5); }
+.login-box h1 { font-size: 1.5rem; margin-bottom: .25rem; }
+.login-box p { color: #94a3b8; font-size: .875rem; margin-bottom: 1.5rem; }
+.login-box input { width: 100%; padding: .75rem 1rem; background: #334155; border: 1px solid #475569; border-radius: 10px; color: #e2e8f0; font-size: 1rem; outline: none; }
+.login-box input:focus { border-color: #3b82f6; }
+.login-box button { width: 100%; padding: .75rem; background: #3b82f6; color: #fff; border: none; border-radius: 10px; font-size: 1rem; cursor: pointer; margin-top: 1rem; font-weight: 600; }
+.login-box button:hover { background: #2563eb; }
+.login-box .error { color: #ef4444; font-size: .875rem; margin-top: .75rem; display: none; }
+
+/* Dashboard */
+#dashboard { display: none; padding: 1.5rem; max-width: 1400px; margin: 0 auto; }
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+.header h1 { font-size: 1.5rem; }
+.header .meta { color: #64748b; font-size: .875rem; }
+.header button { background: #334155; color: #e2e8f0; border: 1px solid #475569; padding: .5rem 1rem; border-radius: 8px; cursor: pointer; font-size: .875rem; }
+.header button:hover { background: #475569; }
+
+/* Range selector */
+.range-bar { display: flex; gap: .5rem; margin-bottom: 1.5rem; }
+.range-btn { padding: .4rem 1rem; border-radius: 8px; border: 1px solid #475569; background: #1e293b; color: #94a3b8; cursor: pointer; font-size: .8125rem; }
+.range-btn.active { background: #3b82f6; border-color: #3b82f6; color: #fff; }
+.range-btn:hover { background: #334155; }
+.range-btn.active:hover { background: #2563eb; }
+
+/* Cards */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+.card { background: #1e293b; border-radius: 12px; padding: 1.25rem; border: 1px solid #334155; }
+.card .label { color: #94a3b8; font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; }
+.card .value { font-size: 1.75rem; font-weight: 700; margin-top: .25rem; }
+
+/* Map + tables grid */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+@media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
+
+/* Map */
+.map-container { background: #1e293b; border-radius: 12px; border: 1px solid #334155; overflow: hidden; }
+.map-container h3 { padding: 1rem 1.25rem; font-size: .875rem; text-transform: uppercase; letter-spacing: .05em; color: #94a3b8; }
+#map { height: 360px; }
+
+/* Tables */
+.table-container { background: #1e293b; border-radius: 12px; border: 1px solid #334155; }
+.table-container h3 { padding: 1rem 1.25rem .5rem; font-size: .875rem; text-transform: uppercase; letter-spacing: .05em; color: #94a3b8; }
+table { width: 100%; border-collapse: collapse; font-size: .875rem; }
+th { text-align: left; padding: .5rem 1.25rem; color: #64748b; font-weight: 500; font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid #334155; }
+td { padding: .5rem 1.25rem; border-bottom: 1px solid #1e293b; }
+tr:hover td { background: #334155; }
+.bar-cell { display: flex; align-items: center; gap: .5rem; }
+.bar { height: 6px; border-radius: 3px; background: #3b82f6; min-width: 4px; }
+.bar-num { min-width: 2.5rem; text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Chart */
+.chart-container { background: #1e293b; border-radius: 12px; border: 1px solid #334155; padding: 1.25rem; margin-bottom: 1.5rem; }
+.chart-container h3 { font-size: .875rem; text-transform: uppercase; letter-spacing: .05em; color: #94a3b8; margin-bottom: 1rem; }
+#dailyChart { width: 100%; height: 200px; }
+
+/* Loading */
+.loading { text-align: center; padding: 3rem; color: #64748b; }
+</style>
+</head>
+<body>
+
+<!-- Login Screen -->
+<div id="login-screen">
+  <div class="login-box">
+    <h1>📊 Bible Analytics</h1>
+    <p>Introdu parola pentru a accesa dashboard-ul</p>
+    <input type="password" id="password-input" placeholder="Parolă" autocomplete="current-password" />
+    <button onclick="login()">Login</button>
+    <div class="error" id="login-error">Parolă incorectă</div>
+  </div>
+</div>
+
+<!-- Dashboard -->
+<div id="dashboard">
+  <div class="header">
+    <div>
+      <h1>📊 Bible Analytics</h1>
+      <div class="meta" id="meta"></div>
+    </div>
+    <button onclick="logout()">Logout</button>
+  </div>
+
+  <div class="range-bar">
+    <button class="range-btn active" data-range="24h" onclick="setRange('24h')">Ultimele 24h</button>
+    <button class="range-btn" data-range="7d" onclick="setRange('7d')">7 zile</button>
+    <button class="range-btn" data-range="30d" onclick="setRange('30d')">30 zile</button>
+  </div>
+
+  <div class="stats" id="stats">
+    <div class="card"><div class="label">Total Views</div><div class="value">—</div></div>
+    <div class="card"><div class="label">Azi</div><div class="value">—</div></div>
+    <div class="card"><div class="label">Unici (IPs)</div><div class="value">—</div></div>
+  </div>
+
+  <div class="grid-2">
+    <div class="map-container">
+      <h3>🌍 După Țară</h3>
+      <div id="map"></div>
+    </div>
+    <div class="table-container">
+      <h3>📄 Pagini</h3>
+      <table>
+        <thead><tr><th>Pagină</th><th style="text-align:right;">Views</th></tr></thead>
+        <tbody id="pages-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="chart-container">
+    <h3>📈 Vizualizări / Zi</h3>
+    <canvas id="dailyChart"></canvas>
+  </div>
+</div>
+
+<script>
+const API = '/api/analytics';
+let token = localStorage.getItem('analytics_token');
+let currentRange = '7d';
+
+// ─── Auth ─────────────────────────────────────────────────
+async function login() {
+  const password = document.getElementById('password-input').value;
+  const err = document.getElementById('login-error');
+  try {
+    const r = await fetch(API + '/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password })
+    });
+    if (!r.ok) throw new Error();
+    const data = await r.json();
+    token = data.token;
+    localStorage.setItem('analytics_token', token);
+    err.style.display = 'none';
+    showDashboard();
+  } catch(e) {
+    err.style.display = 'block';
+  }
+}
+
+function logout() {
+  if (token) {
+    navigator.sendBeacon(API + '/logout', null);
+  }
+  token = null;
+  localStorage.removeItem('analytics_token');
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+async function checkAuth() {
+  if (!token) return false;
+  try {
+    const r = await fetch(API + '/check', {
+      headers: { 'x-analytics-sid': token }
+    });
+    return r.ok;
+  } catch { return false; }
+}
+
+// ─── Header helper ────────────────────────────────────────
+function authHeaders() {
+  return { 'x-analytics-sid': token };
+}
+
+// ─── Range ────────────────────────────────────────────────
+function setRange(range) {
+  currentRange = range;
+  document.querySelectorAll('.range-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.range === range);
+  });
+  loadStats();
+}
+
+// ─── Load & Render ────────────────────────────────────────
+let map = null;
+let mapMarkers = [];
+
+async function loadStats() {
+  try {
+    const r = await fetch(`${API}/stats?range=${currentRange}`, {
+      headers: authHeaders()
+    });
+    if (!r.ok) throw new Error('Auth failed');
+    const data = await r.json();
+    renderStats(data);
+  } catch(e) {
+    // Token might be expired
+    logout();
+  }
+}
+
+function renderStats(data) {
+  // Cards
+  const cards = document.querySelectorAll('#stats .card .value');
+  cards[0].textContent = data.total.toLocaleString();
+  cards[1].textContent = data.today.toLocaleString();
+  cards[2].textContent = data.unique_ips.toLocaleString();
+
+  document.getElementById('meta').textContent =
+    `Ultimele ${currentRange === '24h' ? '24 de ore' : currentRange === '7d' ? '7 zile' : '30 de zile'}`;
+
+  // Map
+  renderMap(data.by_country);
+
+  // Pages table
+  const maxViews = data.by_path.length > 0 ? data.by_path[0].views : 1;
+  document.getElementById('pages-tbody').innerHTML = data.by_path.map(p => `
+    <tr>
+      <td>${escapeHtml(p.path)}</td>
+      <td style="text-align:right;">
+        <div class="bar-cell" style="justify-content:flex-end;">
+          <span class="bar-num">${p.views}</span>
+          <div class="bar" style="width:${(p.views / maxViews) * 120}px"></div>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+
+  // Daily chart
+  renderChart(data.by_day);
+}
+
+function renderMap(countries) {
+  if (!map) {
+    map = L.map('map').setView([20, 0], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 18
+    }).addTo(map);
+  }
+
+  // Clear old markers
+  mapMarkers.forEach(m => map.removeLayer(m));
+  mapMarkers = [];
+
+  if (countries.length === 0) return;
+
+  const maxViews = countries[0].views;
+  const radiusScale = (views) => Math.max(6, Math.sqrt(views / maxViews) * 30);
+
+  // Approximate country centers (lat, lng)
+  const coords = {
+    'United States': [37.09, -95.71], 'Canada': [56.13, -106.35],
+    'United Kingdom': [55.38, -3.44], 'Germany': [51.17, 10.45],
+    'France': [46.60, 1.89], 'Italy': [41.87, 12.57],
+    'Spain': [40.46, -3.75], 'Netherlands': [52.13, 5.29],
+    'Romania': [45.94, 24.97], 'Moldova': [47.41, 28.37],
+    'Russia': [61.52, 105.32], 'Ukraine': [48.38, 31.17],
+    'Poland': [51.92, 19.15], 'Sweden': [60.13, 18.64],
+    'Brazil': [-14.24, -51.93], 'Argentina': [-38.42, -63.62],
+    'India': [20.59, 78.96], 'China': [35.86, 104.20],
+    'Japan': [36.20, 138.25], 'Australia': [-25.27, 133.78],
+    'South Africa': [-30.56, 22.94], 'Nigeria': [9.08, 8.68],
+    'Egypt': [26.82, 30.80], 'Greece': [39.07, 21.83],
+    'Turkey': [38.96, 35.24], 'Israel': [31.05, 34.85],
+    'Saudi Arabia': [24.00, 44.72], 'UAE': [23.42, 53.85],
+    'Mexico': [23.63, -102.55], 'Indonesia': [-0.79, 113.92]
+  };
+
+  countries.forEach(c => {
+    if (c.country === 'Unknown') return;
+    const pos = coords[c.country];
+    if (!pos) return;
+    const radius = radiusScale(c.views);
+    const marker = L.circleMarker(pos, {
+      radius,
+      color: '#3b82f6',
+      fillColor: '#3b82f6',
+      fillOpacity: 0.4,
+      weight: 2
+    }).addTo(map).bindPopup(`<b>${c.country}</b><br>${c.views} vizualizări`);
+    mapMarkers.push(marker);
+  });
+}
+
+function renderChart(days) {
+  const canvas = document.getElementById('dailyChart');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = 200 * dpr;
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = '200px';
+  ctx.scale(dpr, dpr);
+  const W = rect.width;
+  const H = 200;
+  const PAD = { top: 20, bottom: 30, left: 40, right: 20 };
+
+  if (!days || days.length === 0) {
+    ctx.fillStyle = '#64748b';
+    ctx.textAlign = 'center';
+    ctx.font = '14px sans-serif';
+    ctx.fillText('Nu există date', W/2, H/2);
+    return;
+  }
+
+  const chartW = W - PAD.left - PAD.right;
+  const chartH = H - PAD.top - PAD.bottom;
+  const maxViews = Math.max(...days.map(d => d.views), 1);
+  const barW = Math.min(24, (chartW - days.length) / days.length);
+
+  // Grid lines
+  ctx.strokeStyle = '#334155';
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i <= 4; i++) {
+    const y = PAD.top + (chartH / 4) * i;
+    ctx.beginPath();
+    ctx.moveTo(PAD.left, y);
+    ctx.lineTo(W - PAD.right, y);
+    ctx.stroke();
+    ctx.fillStyle = '#64748b';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(Math.round(maxViews - (maxViews / 4) * i), PAD.left - 6, y + 4);
+  }
+
+  // Bars
+  days.forEach((d, i) => {
+    const x = PAD.left + (chartW / days.length) * i + (chartW / days.length - barW) / 2;
+    const h = (d.views / maxViews) * chartH;
+    const y = PAD.top + chartH - h;
+
+    ctx.fillStyle = '#3b82f6';
+    ctx.beginPath();
+    ctx.roundRect(x, y, barW, h, [3, 3, 0, 0]);
+    ctx.fill();
+
+    // Labels (every other day)
+    if (i % 2 === 0 || days.length <= 7) {
+      ctx.fillStyle = '#64748b';
+      ctx.font = '9px sans-serif';
+      ctx.textAlign = 'center';
+      const label = d.day.slice(5); // MM-DD
+      ctx.fillText(label, x + barW / 2, H - 6);
+    }
+  });
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ─── Init ─────────────────────────────────────────────────
+async function showDashboard() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  loadStats();
+}
+
+(async () => {
+  const authed = await checkAuth();
+  if (authed) {
+    showDashboard();
+  }
+})();
+
+// Handle Enter key on password field
+document.getElementById('password-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') login();
+});
+</script>
+</body>
+</html>

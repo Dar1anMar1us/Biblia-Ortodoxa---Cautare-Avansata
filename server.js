@@ -2,13 +2,30 @@ const express = require('express');
 const Database = require('better-sqlite3');
 const path = require('path');
 const cors = require('cors');
+const analytics = require('./analytics');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const ANALYTICS_PASSWORD = process.env.ANALYTICS_PASSWORD || 'Jerusalem2016';
 const DB_PATH = path.join(__dirname, 'bible.db');
 
 app.use(cors());
 app.use(express.json());
+
+// ─── Analytics logging middleware ───────────────────────────
+app.use((req, res, next) => {
+  // Skip analytics API calls, static files, and non-page routes
+  const skip = [
+    '/api/analytics', '/analytics/', '/robots.txt', '/sitemap.xml',
+    '/favicon', '/assets/', '/images/'
+  ];
+  const shouldSkip = skip.some(p => req.path.startsWith(p));
+  if (!shouldSkip && req.method === 'GET') {
+    // Fire-and-forget: log without blocking the response
+    analytics.logPageview(req).catch(() => {});
+  }
+  next();
+});
 
 // Database connection (singleton)
 function getDb() {
@@ -512,6 +529,53 @@ app.get('/api/sinaxar/search', (req, res) => {
 
   res.json(filtered.map(r => ({ luna: r.luna, zi: r.zi, sfant: r.sfinti })));
 });
+
+// ─── Analytics API ─────────────────────────────────────────
+// Auth middleware for analytics
+function requireAnalyticsAuth(req, res, next) {
+  const sid = req.headers['x-analytics-sid'];
+  if (analytics.validateSession(sid)) return next();
+  const auth = req.headers['authorization'];
+  if (auth === `Bearer ${ANALYTICS_PASSWORD}`) return next();
+  res.status(401).json({ error: 'Unauthorized' });
+}
+
+// Login
+app.post('/api/analytics/login', (req, res) => {
+  const { password } = req.body || {};
+  if (password !== ANALYTICS_PASSWORD) {
+    return res.status(401).json({ error: 'Invalid password' });
+  }
+  const sid = analytics.createSession();
+  res.json({ success: true, token: sid });
+});
+
+// Check auth status
+app.get('/api/analytics/check', requireAnalyticsAuth, (req, res) => {
+  res.json({ authenticated: true });
+});
+
+// Logout
+app.post('/api/analytics/logout', (req, res) => {
+  const sid = req.headers['x-analytics-sid'];
+  analytics.deleteSession(sid);
+  res.json({ success: true });
+});
+
+// Get stats
+app.get('/api/analytics/stats', requireAnalyticsAuth, (req, res) => {
+  const range = req.query.range || '7d';
+  res.json(analytics.getStats(range));
+});
+
+// ─── Analytics admin page ──────────────────────────────────
+app.get('/analytics', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'analytics.html'));
+});
+
+// Redirect common typo
+app.get('/analitycs', (req, res) => res.redirect('/analytics'));
+app.get('/analitics', (req, res) => res.redirect('/analytics'));
 
 // ─── Serve static files (public/) ──────────────────────────
 app.use(express.static(path.join(__dirname, 'public')));
