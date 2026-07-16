@@ -583,7 +583,6 @@ app.get('/api/analytics/stats', requireAnalyticsAuth, (req, res) => {
   res.json(analytics.getStats(range));
 });
 
-// ─── Analytics admin page ──────────────────────────────────
 app.get('/analytics', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'analytics.html'));
 });
@@ -591,6 +590,22 @@ app.get('/analytics', (req, res) => {
 // Redirect common typo
 app.get('/analitycs', (req, res) => res.redirect('/analytics'));
 app.get('/analitics', (req, res) => res.redirect('/analytics'));
+
+// ─── Block scanner paths (before SPA catch-all) ────────────
+app.use((req, res, next) => {
+  const scannerPaths = [
+    /\.env/, /\.git\//, /wp-admin/, /wp-content/, /phpinfo/,
+    /_profiler/, /xmlrpc/, /dns-query/, /resolve/, /secrets\.json/,
+    /credentials\.json/, /config\.json/, /config\.js/, /adminer/,
+    /phpunit/, /actuator/, /swagger/, /\.svn\//, /\.DS_Store/,
+    /\.htaccess/, /\.htpasswd/
+  ];
+  const isScanner = scannerPaths.some(p => p.test(req.path));
+  if (isScanner) {
+    return res.status(404).json({ error: 'Not found' });
+  }
+  next();
+});
 
 // ─── Serve static files (public/) ──────────────────────────
 app.use(express.static(path.join(__dirname, 'public')));
