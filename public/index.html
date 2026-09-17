@@ -499,22 +499,22 @@
       .cal-day.today::after { top: -1px; right: 1px; font-size: 6px; }
     }
 
-    /* Iconiță LinkedIn în footer (credit autor) */
+    /* Iconiță LinkedIn în footer (credit autor) — exact cât textul, aliniată inline */
     .footer-linkedin {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 30px;
-      height: 30px;
-      margin-left: 6px;
-      border-radius: 6px;
+      position: relative;
+      display: inline-block;
+      width: 1em;
+      height: 1em;
+      margin-left: .35em;
       color: var(--text-dim);
-      vertical-align: -9px;
-      transition: color .2s ease, background-color .2s ease, transform .2s ease;
+      vertical-align: -0.15em;   /* coborâtă ușor, ca să stea pe linia textului */
+      transition: color .2s ease;
     }
-    .footer-linkedin svg { width: 13px; height: 13px; display: block; }
-    .footer-linkedin:hover { color: var(--gold); background-color: rgba(201, 168, 76, .12); transform: translateY(-1px); }
-    .footer-linkedin:focus-visible { color: var(--gold); outline: none; box-shadow: 0 0 0 2px rgba(201, 168, 76, .35); }
+    .footer-linkedin svg { width: 1em; height: 1em; display: block; }
+    /* zonă de tap confortabilă pe mobil, fără să umfle cutia/rândul */
+    .footer-linkedin::after { content: ''; position: absolute; inset: -0.7em; }
+    .footer-linkedin:hover { color: var(--gold); }
+    .footer-linkedin:focus-visible { color: var(--gold); outline: none; box-shadow: 0 0 0 2px rgba(201, 168, 76, .35); border-radius: 3px; }
   </style>
 </head>
 <body>
