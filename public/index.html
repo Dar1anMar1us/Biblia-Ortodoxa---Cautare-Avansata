@@ -503,18 +503,22 @@
     .footer-linkedin {
       position: relative;
       display: inline-block;
+      box-sizing: border-box;
       width: 1em;
       height: 1em;
+      padding: .09em;                 /* aer între „in” și marginea albastră */
       margin-left: .35em;
-      color: var(--text-dim);
-      vertical-align: -0.15em;   /* coborâtă ușor, ca să stea pe linia textului */
-      transition: color .2s ease;
+      color: #fff;                    /* glyph alb */
+      background: #0a66c2;            /* albastrul LinkedIn */
+      border-radius: .18em;
+      vertical-align: -0.15em;        /* coborâtă ușor, ca să stea pe linia textului */
+      transition: background-color .2s ease, transform .2s ease;
     }
-    .footer-linkedin svg { width: 1em; height: 1em; display: block; }
+    .footer-linkedin svg { width: 100%; height: 100%; display: block; }
     /* zonă de tap confortabilă pe mobil, fără să umfle cutia/rândul */
     .footer-linkedin::after { content: ''; position: absolute; inset: -0.7em; }
-    .footer-linkedin:hover { color: var(--gold); }
-    .footer-linkedin:focus-visible { color: var(--gold); outline: none; box-shadow: 0 0 0 2px rgba(201, 168, 76, .35); border-radius: 3px; }
+    .footer-linkedin:hover { background: #1180d6; transform: translateY(-1px); }
+    .footer-linkedin:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(10, 102, 194, .45); }
   </style>
 </head>
 <body>
