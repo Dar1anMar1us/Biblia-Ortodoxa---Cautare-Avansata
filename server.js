@@ -692,7 +692,7 @@ app.use((req, res, next) => {
 });
 
 // ─── Start server ────────────────────────────────────────────
-app.listen(PORT, () => {
+app.listen(PORT, '127.0.0.1', () => {   // doar localhost: nginx îl expune public, nu aplicația
   console.log(`📖 Bible API running at http://localhost:${PORT}`);
   console.log(`   Browse:    http://localhost:${PORT}/`);
   console.log(`   API docs:  http://localhost:${PORT}/api/books`);
