@@ -156,6 +156,35 @@ async function logPageview(req) {
   ).run(req.path, ip, geo.country, geo.city, ua, ref);
 }
 
+// ─── Clasificare căi: pagini reale vs. zgomot de scanere/crawlere ───
+// Paginile „adevărate" sunt cele pe care le servesc rutele aplicației.
+const CONTENT_RULES = [
+  /^\/$/,                                                     // prima pagină
+  /^\/carte(\/|$)/i,                                          // paginile de citire
+  /^\/(salvate|calendar|search)(\/|$)/i,                       // paginile din SPA
+  /^\/api\/(books|calendar|reference|search|sinaxar)(\/|$)/i, // API-ul public real
+];
+
+// Tot ce nu e mai sus e zgomot (scanere, crawlere, boți). Îl grupăm pe categorii.
+const NOISE_GROUPS = [
+  ['Exploatare / path traversal', /^\/\@fs\/|%2e%2e|\.\.\/|\/proc\/self|\/etc\/(passwd|shadow)/],
+  ['WordPress / CMS', /^\/{1,2}wp-|^\/wordpress(\/|$)|^\/blog\/wp-|^\/admin(\/|$)|^\/wp\/|xmlrpc\.php$|^\/index\.php$/],
+  ['Fișiere sensibile (.env, .git, chei)', /^\/\./],
+  ['Panouri & instrumente (C2, proxy)', /^\/(fetch|proxy|pdown|push|havoc|j\.ad|enhancecp|activity|socket\.io)(\/|$)/],
+  ['Probe de framework / API', /^\/api\/(session|health|config|auth|token|graphql|users)|^\/actuator|^\/graphql/],
+  ['Fișiere statice & SEO', /\.(png|jpe?g|gif|svg|ico|webp|css|js|map|woff2?|ttf)$|^\/robots\.txt$|^\/sitemap\.xml$/],
+];
+
+function classifyPath(p) {
+  const raw = (p || '').split('?')[0] || '/';
+  if (CONTENT_RULES.some(re => re.test(raw))) return { kind: 'content' };
+  const low = raw.toLowerCase();
+  for (const [group, re] of NOISE_GROUPS) {
+    if (re.test(low)) return { kind: 'noise', group };
+  }
+  return { kind: 'noise', group: 'Altele (probe necunoscute)' };
+}
+
 // ─── Stats endpoints ────────────────────────────────────────
 
 function getStats(range = '7d') {
@@ -178,11 +207,31 @@ function getStats(range = '7d') {
     GROUP BY country ORDER BY views DESC
   `).all();
 
-  const byPath = db.prepare(`
+  // Aducem toate căile distincte (pentru clasificare corectă), apoi separăm:
+  // pagini reale (by_path) vs. zgomot de scanere/crawlere (noise)
+  const allPaths = db.prepare(`
     SELECT path, COUNT(*) as views
     FROM pageviews WHERE ts >= ${since}
-    GROUP BY path ORDER BY views DESC LIMIT 50
+    GROUP BY path ORDER BY views DESC LIMIT 5000
   `).all();
+
+  const contentPaths = [];
+  const noiseGroups = new Map();
+  let noiseViews = 0;
+  for (const row of allPaths) {
+    const cls = classifyPath(row.path);
+    if (cls.kind === 'content') { contentPaths.push(row); continue; }
+    noiseViews += row.views;
+    if (!noiseGroups.has(cls.group)) noiseGroups.set(cls.group, { group: cls.group, views: 0, paths: [] });
+    const g = noiseGroups.get(cls.group);
+    g.views += row.views;
+    g.paths.push(row);
+  }
+  const byPath = contentPaths.slice(0, 50);
+  const noise = [...noiseGroups.values()]
+    .map(g => ({ group: g.group, views: g.views, paths: g.paths.slice(0, 20), paths_total: g.paths.length }))
+    .sort((a, b) => b.views - a.views);
+  const noisePathsTotal = [...noiseGroups.values()].reduce((n, g) => n + g.paths.length, 0);
 
   const byDay = db.prepare(`
     SELECT date(ts) as day, COUNT(*) as views
@@ -190,7 +239,7 @@ function getStats(range = '7d') {
     GROUP BY day ORDER BY day
   `).all();
 
-  return { total, today, unique_ips: uniqueIps, by_country: byCountry, by_path: byPath, by_day: byDay };
+  return { total, today, unique_ips: uniqueIps, by_country: byCountry, by_path: byPath, by_day: byDay, noise, noise_views: noiseViews, noise_paths: noisePathsTotal };
 }
 
 // ─── Auth helpers ───────────────────────────────────────────

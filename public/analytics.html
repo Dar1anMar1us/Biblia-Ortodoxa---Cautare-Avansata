@@ -62,6 +62,25 @@ tr:hover td { background: #334155; }
 .bar { height: 6px; border-radius: 3px; background: #3b82f6; min-width: 4px; }
 .bar-num { min-width: 2.5rem; text-align: right; font-variant-numeric: tabular-nums; }
 
+/* Scan noise (boți / crawlere) — dropdown închis implicit */
+.noise-box { border-top: 1px solid #334155; }
+.noise-box summary { display: flex; justify-content: space-between; align-items: center; gap: .75rem;
+  padding: .875rem 1.25rem; cursor: pointer; list-style: none; font-size: .8125rem; color: #94a3b8; }
+.noise-box summary::-webkit-details-marker { display: none; }
+.noise-box summary::after { content: '▾'; font-size: .7rem; color: #64748b; transition: transform .2s ease; }
+.noise-box[open] summary::after { transform: rotate(180deg); }
+.noise-box summary:hover { background: #243044; }
+.noise-title { font-weight: 600; color: #cbd5e1; white-space: nowrap; }
+.noise-meta { font-variant-numeric: tabular-nums; text-align: right; }
+.noise-body { padding: 0 1.25rem 1rem; }
+.noise-group { margin-top: .875rem; }
+.noise-group h4 { display: flex; justify-content: space-between; gap: .5rem; font-size: .7rem;
+  text-transform: uppercase; letter-spacing: .05em; color: #64748b; margin-bottom: .35rem; }
+.noise-path { display: flex; justify-content: space-between; gap: 1rem; padding: .2rem 0;
+  border-bottom: 1px solid #1e293b; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .72rem; color: #94a3b8; }
+.noise-path span:last-child { color: #64748b; font-variant-numeric: tabular-nums; }
+.noise-note { font-size: .7rem; color: #64748b; padding-top: .5rem; line-height: 1.5; }
+
 /* Chart */
 .chart-container { background: #1e293b; border-radius: 12px; border: 1px solid #334155; padding: 1.25rem; margin-bottom: 1.5rem; }
 .chart-container h3 { font-size: .875rem; text-transform: uppercase; letter-spacing: .05em; color: #94a3b8; margin-bottom: 1rem; }
@@ -117,6 +136,14 @@ tr:hover td { background: #334155; }
         <thead><tr><th>Pagină</th><th style="text-align:right;">Views</th></tr></thead>
         <tbody id="pages-tbody"></tbody>
       </table>
+
+      <details class="noise-box" id="noise-box">
+        <summary>
+          <span class="noise-title">🚨 Scan noise (scanere / crawlere)</span>
+          <span class="noise-meta"><span id="noise-views">0</span> cereri · <span id="noise-paths">0</span> URL-uri</span>
+        </summary>
+        <div class="noise-body" id="noise-body"></div>
+      </details>
     </div>
   </div>
 
@@ -211,8 +238,10 @@ function renderStats(data) {
   cards[1].textContent = data.today.toLocaleString();
   cards[2].textContent = data.unique_ips.toLocaleString();
 
+  const noiseShare = data.total ? Math.round((data.noise_views || 0) / data.total * 100) : 0;
   document.getElementById('meta').textContent =
-    `Ultimele ${currentRange === '24h' ? '24 de ore' : currentRange === '7d' ? '7 zile' : '30 de zile'}`;
+    `Ultimele ${currentRange === '24h' ? '24 de ore' : currentRange === '7d' ? '7 zile' : '30 de zile'}` +
+    (data.noise_views ? ` · ${noiseShare}% din cereri = scanere/bots (ascunse mai jos)` : '');
 
   // Map
   renderMap(data.by_country);
@@ -230,6 +259,20 @@ function renderStats(data) {
       </td>
     </tr>
   `).join('');
+
+  // Scan noise — dropdown închis implicit
+  const noise = data.noise || [];
+  document.getElementById('noise-views').textContent = (data.noise_views || 0).toLocaleString();
+  document.getElementById('noise-paths').textContent = (data.noise_paths || 0).toLocaleString();
+  document.getElementById('noise-body').innerHTML = noise.length === 0
+    ? '<p class="noise-note">Nimic — nicio cerere de la scanere în perioada selectată. 🎉</p>'
+    : noise.map(g => `
+        <div class="noise-group">
+          <h4><span>${escapeHtml(g.group)}</span><span>${g.views} cereri · ${g.paths_total} URL-uri</span></h4>
+          ${g.paths.map(p => `<div class="noise-path"><span>${escapeHtml(p.path)}</span><span>${p.views}</span></div>`).join('')}
+          ${g.paths_total > g.paths.length ? `<div class="noise-note">…și alte ${g.paths_total - g.paths.length} URL-uri (cele mai frecvente sunt afișate)</div>` : ''}
+        </div>`).join('') +
+      '<p class="noise-note">Acestea nu sunt vizitatori: sunt scanere automate care încearcă căi cunoscute (.env, .git, /wp-login.php). Site-ul le răspunde 404 — apar aici doar ca să nu polueze lista de pagini reale.</p>';
 
   // Daily chart
   renderChart(data.by_day);
