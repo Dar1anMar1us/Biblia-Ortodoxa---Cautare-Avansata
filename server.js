@@ -39,32 +39,54 @@ function getDb() {
 
 // ─── Helper: Parse FTS5 search query ─────────────────────────
 // Supports: words, "phrase", AND, OR, NOT, prefix*
+// Curăță un termen de caracterele care sparg sintaxa FTS5 ($, ^, :, {, }, ghilimele…).
+// Se păstrează literele (inclusiv diacritice), cifrele, spațiile, apostroful și cratima.
+function cleanTerm(term) {
+  return (term || '')
+    .replace(/[^\p{L}\p{N}\s'’\-]+/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// Construiește o interogare FTS5 VALIDĂ din ce a scris utilizatorul.
+// Inputul nu e NICIODATĂ trimis brut către SQLite: fiecare termen e curățat și pus
+// între ghilimele (frază literală), iar operatorii AND/OR/NOT rămân operatori.
+// Fără asta, un simplu „$” ajungea la FTS5 ca `"$"` (frază goală) → SqliteError → 500.
 function buildFtsQuery(input) {
-  if (!input || !input.trim()) return null;
+  if (!input || typeof input !== 'string') return null;
+  const raw = input.trim();
+  if (!raw) return null;
 
-  const trimmed = input.trim();
+  const parts = [];
+  const re = /"([^"]*)"|(\S+)/g;
+  let m;
 
-  // If already has explicit FTS syntax (quotes, parens, asterisks), trust it
-  if (/["()*]/.test(trimmed)) {
-    return trimmed;
+  while ((m = re.exec(raw)) !== null) {
+    const phrase = m[1];
+    const word = m[2];
+
+    if (phrase !== undefined) {
+      const clean = cleanTerm(phrase);
+      if (clean) parts.push(`"${clean}"`);
+      continue;
+    }
+
+    if (/^(AND|OR|NOT)$/i.test(word)) {
+      parts.push(word.toUpperCase());
+      continue;
+    }
+
+    // prefix: „iubi*” → iubi*
+    const prefixMatch = /^(.*?)\*$/.exec(word);
+    const clean = cleanTerm(prefixMatch ? prefixMatch[1] : word);
+    if (clean) parts.push(prefixMatch ? `${clean}*` : `"${clean}"`);
   }
 
-  // If has AND/OR/NOT operators, wrap each sub-expression in quotes
-  // so multi-word segments become phrase matches instead of individual tokens
-  if (/\b(AND|OR|NOT)\b/i.test(trimmed)) {
-    const parts = trimmed.split(/\b(AND|OR|NOT)\b/i);
-    return parts.map(part => {
-      const p = part.trim();
-      if (!p) return '';
-      if (/^(AND|OR|NOT)$/i.test(p)) return p.toUpperCase();
-      return `"${p}"`;
-    }).join(' ');
-  }
+  // FTS5 cere expresii între operatori: scoatem operatorii de la capete
+  while (parts.length && /^(AND|OR|NOT)$/.test(parts[0])) parts.shift();
+  while (parts.length && /^(AND|OR|NOT)$/.test(parts[parts.length - 1])) parts.pop();
 
-  // Simple case: single word → exact, multiple words → phrase
-  const tokens = trimmed.split(/\s+/).filter(t => t.length > 0);
-  if (tokens.length === 0) return null;
-  return `"${tokens.join(' ')}"`;
+  return parts.length ? parts.join(' ') : null;
 }
 
 // ─── GET /api/books ──────────────────────────────────────────
@@ -244,7 +266,14 @@ app.get('/api/search', (req, res) => {
   }
 
   const ftsQuery = buildFtsQuery(q);
-  if (!ftsQuery) return res.status(400).json({ error: 'Invalid query' });
+  if (!ftsQuery) {
+    // ex. doar „$” sau doar operatori: nu e o eroare de API, pur și simplu nu are ce căuta
+    return res.json({
+      query: q, fts_query: '', total: 0,
+      limit: parseInt(limit), offset: parseInt(offset),
+      results: [], filtre: [], notice: 'Interogarea nu conține termeni căutabili.'
+    });
+  }
 
   let sql, countSql, params;
 
@@ -283,16 +312,20 @@ app.get('/api/search', (req, res) => {
 
   const resultParams = [...ftsParams, parseInt(limit), parseInt(offset)];
 
-  // Get total count
-  const countResult = db.prepare(countSql).get(...ftsParams);
-  const total = countResult.total;
-
-  // Get results
-  let rows;
+  // Numărare + rezultate, ambele protejate: o interogare FTS5 respinsă de SQLite
+  // nu trebuie să dea NICIODATĂ 500 (doar „niciun rezultat”), iar incidentul se loghează.
+  let total = 0;
+  let rows = [];
   try {
+    total = db.prepare(countSql).get(...ftsParams).total;
     rows = db.prepare(sql).all(...resultParams);
   } catch (e) {
-    return res.status(500).json({ error: 'Search failed', detail: e.message });
+    console.warn('[search] interogare FTS5 respinsă:', e.message, '| q =', JSON.stringify(q));
+    return res.json({
+      query: q, fts_query: ftsQuery, total: 0,
+      limit: parseInt(limit), offset: parseInt(offset),
+      results: [], filtre: [], notice: 'Interogarea nu a putut fi interpretată.'
+    });
   }
 
   // Format results (skip per-row highlights to avoid SQLite memory issues)
