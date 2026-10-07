@@ -29,12 +29,27 @@ class SinaxarParser(HTMLParser):
         self._p_text = ''
         self._skip_p = False
 
+    def _flush_p(self):
+        """Inchide paragraful curent. Site-ul foloseste <p> NEINCHISE (10 deschise, 3 inchise),
+        deci nu ne putem baza pe handle_endtag: flush si la startul urmatorului <p>."""
+        if self._in_title:
+            self._in_title = False
+        elif self._in_p and not self._skip_p:
+            text = re.sub(r'\s+', ' ', self._p_text).strip()
+            if text and len(text) > 50:  # Only substantial paragraphs
+                self.paragraphs.append(text)
+        self._in_p = False
+        self._skip_p = False
+
     def handle_starttag(self, tag, attrs):
         a = dict(attrs)
         if tag == 'p':
+            if self._in_p or self._in_title:
+                self._flush_p()
             cls = a.get('class', '')
-            # Skip navigation paragraphs
-            if 'nota' in cls or 'subtitlu' in cls:
+            # IMPORTANT: NU ignora 'subtitlu' — acela ESTE textul vietii sfantului.
+            # Doar nota de sursa ('nota') se sare.
+            if 'nota' in cls:
                 self._skip_p = True
                 return
             align = a.get('align', '')
@@ -42,7 +57,6 @@ class SinaxarParser(HTMLParser):
             if align == 'CENTER' and style and 'font-size' in style:
                 # Title paragraph
                 self._in_title = True
-                self._skip_p = False
                 self._p_text = ''
                 self._in_p = True
                 return
@@ -55,15 +69,7 @@ class SinaxarParser(HTMLParser):
 
     def handle_endtag(self, tag):
         if tag == 'p':
-            if self._in_title:
-                self._in_title = False
-                self._skip_p = False
-            elif self._in_p and not self._skip_p:
-                text = self._p_text.strip()
-                if text and len(text) > 50:  # Only substantial paragraphs
-                    self.paragraphs.append(text)
-            self._in_p = False
-            self._skip_p = False
+            self._flush_p()
 
     def handle_data(self, data):
         if self._in_title:
