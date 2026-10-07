@@ -413,6 +413,15 @@
       font-size: 0.88em; line-height: 1.7; color: var(--text);
       text-align: justify;
     }
+    /* Zi fără text de sinaxar: rugăciunea de închidere, centrată, în locul unui mesaj tehnic */
+    .sinaxar-fallback .sinaxar-text { text-align: center; }
+    .sinaxar-prayer {
+      margin: 14px 6px;
+      font-style: italic;
+      font-size: 1.02em;
+      line-height: 1.8;
+      color: var(--gold);
+    }
 
     .cal-legend-item .dot {
       width: 8px; height: 8px; border-radius: 50%; display: inline-block;
@@ -1398,8 +1407,22 @@
             btn.disabled = false;
           };
         } else {
-          container.innerHTML = '<p style="color:var(--text-dim);font-size:0.85em;margin-top:8px">Viața sfântului nu este disponibilă momentan.</p>';
-          btn.textContent = '📖 Viața sfântului';
+          // Zi cu sinaxar în colecție dar fără text (24 zile/2026), sau zi fără înregistrare:
+          // încheiem cu rugăciunea de închidere a sinaxarului, nu cu un mesaj tehnic.
+          container.innerHTML = `
+            <div class="sinaxar-card sinaxar-fallback">
+              ${data.img_local ? `<img src="${data.img_local}" alt="${escapeHtml(data.titlu || 'Icoana zilei')}" class="sinaxar-img" loading="lazy">` : ''}
+              <div class="sinaxar-text">
+                <p class="sinaxar-prayer">Cu ale lor sfinte rugăciuni, Doamne, miluiește-ne și ne mântuiește pe noi. Amin.</p>
+              </div>
+            </div>`;
+          btn.textContent = '📖 Închide';
+          btn.onclick = () => {
+            container.innerHTML = '';
+            btn.textContent = '📖 Viața sfântului';
+            btn.onclick = () => loadSinaxar(an, zi, luna_nume);
+            btn.disabled = false;
+          };
         }
       } catch(e) {
         container.innerHTML = '<p style="color:var(--text-dim);font-size:0.85em;margin-top:8px">Eroare la încărcare.</p>';
